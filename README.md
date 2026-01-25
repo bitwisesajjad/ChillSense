@@ -1,8 +1,8 @@
 # PWP SPRING 2026
-# PROJECT NAME
+# PROJECT NAME: ChillSense
 # Group information
-* Student 1. Name and email
-* Student 2. Name and email
+* Student 1. Sajjad Ghaeminejad (sghaemin25@student.oulu.fi)
+* Student 2. Hieu Nguyen (hieu.nguyen@student.oulu.fi)
 * Student 3. Name and email
 * Student 4. Name and email
 
