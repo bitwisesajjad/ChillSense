@@ -10,8 +10,8 @@ class Shipment(db.Model):
     status = db.Column(db.String(20), default='active')
     min_temperature = db.Column(db.Float, default=-25.0) 
     max_temperature = db.Column(db.Float, default=-18.0)
-    readings = db.relationship("Reading", back_populates="shipment")
-    alerts = db.relationship("Alert", back_populates="shipment")
+    readings = db.relationship("Reading", back_populates="shipments")
+    alerts = db.relationship("Alert", back_populates="shipments")
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -32,8 +32,8 @@ class Reading(db.Model):
     temp = db.Column(db.Float, nullable=False)
     humidity = db.Column(db.Float, nullable=True) 
     shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=True)
-    shipment = db.relationship("Shipment", back_populates="readings")
-    alert = db.relationship("Alert", back_populates="readings", uselist=False)
+    shipments = db.relationship("Shipment", back_populates="readings")
+    alerts = db.relationship("Alert", back_populates="readings", uselist=False)
     ts = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -51,10 +51,10 @@ class Alert(db.Model):
     msg = db.Column(db.String(200))
     severity = db.Column(db.String(20), default='warning') 
     is_resolved = db.Column(db.Boolean, default=False)
-    shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='CASCADE'), nullable=False)
-    shipment = db.relationship("Shipment", back_populates="alerts")
+    shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=False)
+    shipments = db.relationship("Shipment", back_populates="alerts")
     reading_id = db.Column(db.Integer, db.ForeignKey('readings.id', ondelete='SET NULL'), nullable=True)
-    reading = db.relationship("Reading")
+    readings = db.relationship("Reading", back_populates="alerts")
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):

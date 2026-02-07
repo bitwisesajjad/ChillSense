@@ -32,7 +32,7 @@ psql -v ON_ERROR_STOP=1 -U user -d coldchain <<'EOSQL'
     msg varchar(200),
     severity varchar(20) DEFAULT 'warning',
     is_resolved boolean DEFAULT FALSE,
-    shipment_id integer NOT NULL REFERENCES public.shipments(id) ON DELETE CASCADE,
+    shipment_id integer REFERENCES public.shipments(id) ON DELETE SET NULL,
     reading_id integer UNIQUE REFERENCES public.readings(id) ON DELETE SET NULL,
     created_at timestamp NOT NULL DEFAULT NOW()
   );
@@ -70,6 +70,12 @@ psql -v ON_ERROR_STOP=1 -U user -d coldchain <<'EOSQL'
     (1, 'CREATE_SHIPMENT', 'Seed shipment Truck-001 (Pfizer)'),
     (2, 'CREATE_READING', 'Initial reading for Truck-001 (Pfizer)')
   ON CONFLICT (id) DO NOTHING;
+
+  -- DEBUG: Update sequences to prevent conflicts with future inserts
+  SELECT setval('shipments_id_seq', (SELECT MAX(id) FROM shipments));
+  SELECT setval('readings_id_seq', (SELECT MAX(id) FROM readings));
+  SELECT setval('alerts_id_seq', (SELECT MAX(id) FROM alerts));
+  SELECT setval('audit_logs_id_seq', (SELECT MAX(id) FROM audit_logs));
 EOSQL
 
 echo "Success end"
