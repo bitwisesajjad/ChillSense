@@ -42,6 +42,10 @@ black .
 
 ## Explain
 ### How to create and populate the database
-1. The `docker-compose.yml` file defines a `postgres-db` container for the PostgreSQL database.
-2. When you run `docker compose up --build`, the `postgres-db` container automatically executes the script `postgres/init/initdb.sh` (this file follows `src/models.py` file) to create the database structure and seed initial data.
-3. The database files are persisted in the `postgres/data` directory.
+1. **ORM models and functions** are defined in `src/models.py`.
+2. The repository includes a **database dump** inside **scripts** (`postgres/init/initdb.sh`) to generate and populate the database.
+3. The `docker-compose.yml` file defines a `postgres-db` container for PostgreSQL (version 15-alpine).
+4. When you run `docker compose up --build`, the `postgres-db` container automatically executes the script `postgres/init/initdb.sh` to create the database structure and seed initial data.
+5. The database files are persisted in the `postgres/data` directory.
+6. No dependencies needed in this stage, but Docker.
+7. For manual setup, install dependencies, set up PostgreSQL, and run the sql code in provided scripts (`postgres/init/initdb.sh`) to initialize and populate the database.
