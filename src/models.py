@@ -19,10 +19,10 @@ class Shipment(db.Model):
             'id': self.id,
             'name': self.name,
             'origin': self.origin,
-            'destination': self.destination, # updated
+            'destination': self.destination,
             'status': self.status,
-            'min_temperature': self.min_temperature, # updated
-            'max_temperature': self.max_temperature, # updated
+            'min_temperature': self.min_temperature,
+            'max_temperature': self.max_temperature,
             'created_at': str(self.created_at)
         }
 
@@ -33,14 +33,15 @@ class Reading(db.Model):
     humidity = db.Column(db.Float, nullable=True) 
     shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=True)
     shipment = db.relationship("Shipment", back_populates="readings")
+    alert = db.relationship("Alert", back_populates="reading", uselist=False)
     ts = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
             'id': self.id,
             'temp': self.temp,
-            'humidity': self.humidity, # updated
-            'shipment_id': self.shipment_id, # updated
+            'humidity': self.humidity,
+            'shipment_id': self.shipment_id,
             'ts': str(self.ts)
         }
 
@@ -50,21 +51,21 @@ class Alert(db.Model):
     msg = db.Column(db.String(200))
     severity = db.Column(db.String(20), default='warning') 
     is_resolved = db.Column(db.Boolean, default=False)
-    shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='CASCADE'), nullable=False) # updated
-    reading_id = db.Column(db.Integer, db.ForeignKey('readings.id', ondelete='SET NULL'), nullable=True) # updated
+    shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=False)
     shipment = db.relationship("Shipment", back_populates="alerts")
-    reading = db.relationship("Reading") # updated
+    reading_id = db.Column(db.Integer, db.ForeignKey('readings.id', ondelete='SET NULL'), nullable=True)
+    reading = db.relationship("Reading", back_populates="alert")
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
             'id': self.id,
             'msg': self.msg,
-            'severity': self.severity, # updated
-            'is_resolved': self.is_resolved, # updated
-            'shipment_id': self.shipment_id, # updated
+            'severity': self.severity,
+            'is_resolved': self.is_resolved,
+            'shipment_id': self.shipment_id,
             'reading_id': self.reading_id,
-            'created_at': str(self.created_at) # updated
+            'created_at': str(self.created_at)
         }
 
 class AuditLog(db.Model):
