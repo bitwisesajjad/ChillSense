@@ -48,4 +48,4 @@ black .
 4. When you run `docker compose up --build`, the `postgres-db` container automatically executes the script `postgres/init/initdb.sh` to create the database structure and seed initial data.
 5. The database files are persisted in the `postgres/data` directory.
 6. No dependencies needed in this stage, but Docker.
-7. For manual setup, install dependencies, set up PostgreSQL, and run the sql code in provided scripts (`postgres/init/initdb.sh`) to initialize and populate the database.
+7. For manual setup, install dependencies, set up PostgreSQL, and run the sql code in provided scripts (`postgres/init/initdb.sh`) to initialize and populate the database (but this repo does not support this way unfortunately).
