@@ -42,10 +42,18 @@ black .
 
 ## Explain
 ### How to create and populate the database
-1. **ORM models and functions** are defined in `src/models.py`.
-2. The repository includes a **database dump** inside **scripts** (`postgres/init/initdb.sh`) to generate and populate the database.
-3. The `docker-compose.yml` file defines a `postgres-db` container for PostgreSQL (version 15-alpine).
-4. When you run `docker compose up --build`, the `postgres-db` container automatically executes the script `postgres/init/initdb.sh` to create the database structure and seed initial data.
-5. The database files are persisted in the `postgres/data` directory.
-6. No dependencies needed in this stage, but Docker.
-7. For manual setup, install dependencies, set up PostgreSQL, and run the sql code in provided scripts (`postgres/init/initdb.sh`) to initialize and populate the database (but this repo does not support this way unfortunately).
+- **ORM models and functions** are defined in `src/models.py`.
+- The repository includes a **database dump** inside **scripts** (`postgres/init/initdb.sh`) to generate and populate the database.
+- The `docker-compose.yml` file defines a `postgres-db` container for PostgreSQL (version 15-alpine).
+
+#### 1. How to Run
+- Run `docker compose up --build`.
+  - The `postgres-db` container automatically executes the script `postgres/init/initdb.sh` to create the database structure and seed initial data.
+  - The database files in this container are persisted/mounted in the `postgres/data` directory.
+- How to verify:
+  - Run `docker exec -it postgres-db psql -U user -d coldchain` to check if the SQL schema is created.
+  - Use the `\dt` command in the `psql` shell to check for tables.
+
+#### 2. Other Notes
+- No dependencies are needed at this stage except Docker.
+- For manual setup, install dependencies, set up PostgreSQL, and run the SQL code in the provided script (`postgres/init/initdb.sh`) to initialize and populate the database. However, this project repo does not officially support manual setup.
