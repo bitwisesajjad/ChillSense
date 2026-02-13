@@ -85,3 +85,4 @@ echo "Success end"
 # docker exec -it postgres-db psql -U user -d coldchain
 # \dt
 # SELECT * FROM shipments;
+# SELECT * FROM readings;
