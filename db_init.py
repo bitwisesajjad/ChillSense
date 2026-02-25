@@ -1,6 +1,8 @@
+import secrets
+
 from flask import Flask
 from src.extensions import db
-from src.models import Shipment, Reading, Alert, AuditLog
+from src.models import Shipment, Reading, Alert, AuditLog, ApiKey
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -42,14 +44,12 @@ with app.app_context():
         max_temperature=14.0,
     )
     db.session.add_all([s1, s2, s3])
-    db.session.commit()
 
     # Seed Readings
     r1 = Reading(id=1, temp=5.5, humidity=65.0, shipment_id=1)
     r2 = Reading(id=2, temp=-20.5, humidity=80.0, shipment_id=2)
     r3 = Reading(id=3, temp=13.0, humidity=90.0, shipment_id=3)
     db.session.add_all([r1, r2, r3])
-    db.session.commit()
 
     # Seed Alerts
     a1 = Alert(
@@ -69,7 +69,6 @@ with app.app_context():
         reading_id=2,
     )
     db.session.add_all([a1, a2])
-    db.session.commit()
 
     # Seed AuditLogs
     log1 = AuditLog(
@@ -79,7 +78,17 @@ with app.app_context():
         id=2, action="CREATE_READING", details="Initial reading for Truck-001 (Pfizer)"
     )
     db.session.add_all([log1, log2])
+
+    # Seed API Key
+    token = secrets.token_urlsafe()
+    db_key = ApiKey(
+        key=ApiKey.key_hash(token),
+        admin=True
+    )
+    db.session.add(db_key)
+
     db.session.commit()
+    print(token)
 
 print("Database initialized with hardcoded seed data!")
 
