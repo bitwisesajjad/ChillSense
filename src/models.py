@@ -32,9 +32,10 @@ class Reading(db.Model):
     temp = db.Column(db.Float, nullable=False)
     humidity = db.Column(db.Float, nullable=True) 
     shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=True)
-    shipment = db.relationship("Shipment", back_populates="readings")
     alert = db.relationship("Alert", back_populates="reading", uselist=False)
     ts = db.Column(db.DateTime, default=datetime.now)
+
+    shipment = db.relationship("Shipment", back_populates="readings")
 
     def to_dict(self):
         return {
@@ -51,11 +52,12 @@ class Alert(db.Model):
     msg = db.Column(db.String(200))
     severity = db.Column(db.String(20), default='warning') 
     is_resolved = db.Column(db.Boolean, default=False)
-    shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=False)
-    shipment = db.relationship("Shipment", back_populates="alerts")
+    shipment_id = db.Column(db.Integer, db.ForeignKey('shipments.id', ondelete='SET NULL'), nullable=True)
     reading_id = db.Column(db.Integer, db.ForeignKey('readings.id', ondelete='SET NULL'), nullable=True)
-    reading = db.relationship("Reading", back_populates="alert")
     created_at = db.Column(db.DateTime, default=datetime.now)
+
+    shipment = db.relationship("Shipment", back_populates="alerts")
+    reading = db.relationship("Reading", back_populates="alert")
 
     def to_dict(self):
         return {

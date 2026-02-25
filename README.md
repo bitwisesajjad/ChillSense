@@ -48,12 +48,11 @@ black .
 
 #### 1. How to Run
 - Run `docker compose up --build`.
-  - The `postgres-db` container automatically executes the script `postgres/init/initdb.sh` to create the database structure and seed initial data.
-  - The database files in this container are persisted/mounted in the `postgres/data` directory.
+  - The `postgres-db` container is created automatically with the empty database named `coldchain`. The database files in this container are persisted/mounted in the `postgres/data` directory.
+- Run `python db_init.py` to create tables and seed data only once
 - How to verify:
   - Run `docker exec -it postgres-db psql -U user -d coldchain` to check if the SQL schema is created.
-  - Use the `\dt` command in the `psql` shell to check for tables.
-
+    - Use the `\dt` command in the `psql` shell to check for tables.
 #### 2. Other Notes
 - No dependencies are needed at this stage except Docker.
 - For manual setup, install dependencies, set up PostgreSQL, and run the SQL code in the provided script (`postgres/init/initdb.sh`) to initialize and populate the database. However, this project repo does not officially support manual setup.
