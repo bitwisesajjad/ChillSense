@@ -36,8 +36,14 @@ python app.py # OR: flask run
 ```
 
 3. Prettier / format code
-```
-black .
+For example
+```shell
+pylint db_init.py # To check
+
+black db_init.py # To fix auto
+
+# ruff check db_init.py
+# ruff check db_init.py --fix
 ```
 
 ## Explain
