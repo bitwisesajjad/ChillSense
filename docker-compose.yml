@@ -12,3 +12,19 @@ services:
       - ./postgres/init:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
+  api:
+    build: .
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    environment:
+      - FLASK_DEBUG=1
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=coldchain
+      - POSTGRES_HOST=postgres-db
+      - FLASK_APP=src:create_app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres-db

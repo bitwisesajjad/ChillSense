@@ -2,6 +2,7 @@ Flask
 Flask-SQLAlchemy
 SQLAlchemy
 pysqlite3-binary
+psycopg2-binary
 
 pylint # For quality checks required by Teachers
 ruff # For improving code quality and style to meet the standards right above (pylint)
