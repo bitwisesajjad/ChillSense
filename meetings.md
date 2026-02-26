@@ -13,12 +13,20 @@
 
 
 ## Meeting 2.
-* **DATE:**
-* **PARTICIPANTS:**
-* **TEACHER:**
+* **DATE: 16/02/2026**
+* **PARTICIPANTS: Sajjad, Hieu**
+* **TEACHER: Iván**
 
 ### Action points
-*List here the actions points discussed with assistants*
+- In `models.py`:
+  - Move all `relationship fields/attributes` to the end of each class for convenience
+  - There is a ondelete='SET NULL' with nullable=False. Check it!
+- In `Wiki`:
+  - Add short description of each one of the models
+- In `README`:
+  - SHould remove `python app.py` in this phase. It will be in next phase
+- In general:
+  - Try to remove duplication script to create db 
 
 ### Notes
 *Add here notes that you consider important. This is not mandatory*
