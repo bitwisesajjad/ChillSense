@@ -1,9 +1,11 @@
+"""SQLAlchemy ORM models for the ChillSense API."""
 from datetime import datetime
 import hashlib
-from .extensions import db
+from src.extensions import db
 
 
 class Shipment(db.Model):
+    """Represents a shipment tracked by the system."""
     __tablename__ = "shipments"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -20,6 +22,7 @@ class Shipment(db.Model):
     api_key = db.relationship("ApiKey", back_populates="shipment")
 
     def to_dict(self):
+        """Serialize the shipment to a JSON-friendly dict."""
         return {
             "id": self.id,
             "name": self.name,
@@ -31,14 +34,21 @@ class Shipment(db.Model):
             "created_at": str(self.created_at),
         }
 
+    # for PyLint “too few public methods”
+    def __repr__(self):
+        """Return a string representation."""
+        return f"<Shipment id={self.id} name={self.name!r}>"
+
 
 class Reading(db.Model):
+    """Single sensor reading (temperature/humidity) for a shipment."""
     __tablename__ = "readings"
     id = db.Column(db.Integer, primary_key=True)
     temp = db.Column(db.Float, nullable=False)
     humidity = db.Column(db.Float, nullable=True)
     shipment_id = db.Column(
-        db.Integer, db.ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True
+        db.Integer, db.ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True
     )
     alert = db.relationship("Alert", back_populates="reading", uselist=False)
     ts = db.Column(db.DateTime, default=datetime.now)
@@ -46,6 +56,7 @@ class Reading(db.Model):
     shipment = db.relationship("Shipment", back_populates="readings")
 
     def to_dict(self):
+        """Serialize the reading to a JSON-friendly dict."""
         return {
             "id": self.id,
             "temp": self.temp,
@@ -54,8 +65,13 @@ class Reading(db.Model):
             "ts": str(self.ts),
         }
 
+    def __repr__(self):
+        """Return a string representation."""
+        return f"<Reading id={self.id} shipment_id={self.shipment_id} temp={self.temp}>"
+
 
 class Alert(db.Model):
+    """Alert created when readings violate shipment thresholds."""
     __tablename__ = "alerts"
     id = db.Column(db.Integer, primary_key=True)
     msg = db.Column(db.String(200))
@@ -73,6 +89,7 @@ class Alert(db.Model):
     reading = db.relationship("Reading", back_populates="alert")
 
     def to_dict(self):
+        """Serialize the alert to a JSON-friendly dict."""
         return {
             "id": self.id,
             "msg": self.msg,
@@ -83,23 +100,50 @@ class Alert(db.Model):
             "created_at": str(self.created_at),
         }
 
+    def __repr__(self):
+        """Return a string representation."""
+        return f"<Alert id={self.id} shipment_id={self.shipment_id} severity={self.severity!r}>"
+
 
 class AuditLog(db.Model):
+    """Audit log entry for an action performed in the system."""
     __tablename__ = "audit_logs"
     id = db.Column(db.Integer, primary_key=True)
     action = db.Column(db.String(50))
     details = db.Column(db.String(200))
     ts = db.Column(db.DateTime, default=datetime.now)
 
+    def to_dict(self):
+        """Serialize the audit log entry to a JSON-friendly dict."""
+        return {
+            "id": self.id,
+            "action": self.action,
+            "details": self.details,
+            "ts": str(self.ts),
+        }
+
+    def __repr__(self):
+        """Return a string representation."""
+        return f"<AuditLog id={self.id} action={self.action!r}>"
+
 
 class ApiKey(db.Model):
+    """API key linked to a shipment or admin access."""
     id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(64), nullable=False, unique=True) # Handle error psycopg2.errors.StringDataRightTruncation: value too long for type character varying(64)
-    shipment_id = db.Column(db.Integer, db.ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True)
+    key = db.Column(db.String(64), nullable=False, unique=True)
+    shipment_id = db.Column(
+        db.Integer, db.ForeignKey("shipments.id",
+        ondelete="SET NULL"),
+        nullable=True,
+        )
     admin =  db.Column(db.Boolean, default=False)
 
     shipment = db.relationship("Shipment", back_populates="api_key", uselist=False)
 
     @staticmethod
     def key_hash(key):
-        return hashlib.sha256(key.encode()).hexdigest() # Handle error psycopg2.errors.StringDataRightTruncation: value too long for type character varying(64)
+        """Return a SHA-256 hex digest for given key string."""
+        return hashlib.sha256(key.encode()).hexdigest()
+    def __repr__(self):
+        """Return a string representation."""
+        return f"<ApiKey id={self.id} shipment_id={self.shipment_id} admin={self.admin}>"
