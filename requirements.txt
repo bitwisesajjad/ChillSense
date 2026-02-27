@@ -1,7 +1,7 @@
 Flask
 Flask-SQLAlchemy
 SQLAlchemy
-pysqlite3-binary
+#pysqlite3-binary
 psycopg2-binary
 
 pylint # For quality checks required by Teachers
