@@ -2,7 +2,7 @@
 
 import os
 from flask import Flask, jsonify
-from .api import api_bp
+from .api import api_bp, ShipmentConverter, ReadingConverter
 from .extensions import db
 
 def create_app():
@@ -21,6 +21,9 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
+
+    app.url_map.converters["shipment"] = ShipmentConverter
+    app.url_map.converters["reading"] = ReadingConverter
 
     app.register_blueprint(api_bp, url_prefix="/api")
 
