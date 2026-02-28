@@ -26,7 +26,7 @@ class Shipment(db.Model):
     api_key = db.relationship("ApiKey", back_populates="shipment")
 
     def to_dict(self):
-        """Serialize the shipment to a JSON-friendly dict."""
+        """Serialize the shipment to a JSON-friendly dict"""
         return {
             "id": self.id,
             "name": self.name,
@@ -37,6 +37,50 @@ class Shipment(db.Model):
             "max_temperature": self.max_temperature,
             "created_at": str(self.created_at),
         }
+
+    def deserialize(self, doc):
+        """Populate shipment fields from JSON dict."""
+        self.name = doc["name"]
+        self.origin = doc["origin"]
+        self.destination = doc["destination"]
+        self.status = doc.get("status", self.status or "active")
+        self.min_temperature = float(doc.get("min_temperature", self.min_temperature or -25.0))
+        self.max_temperature = float(doc.get("max_temperature", self.max_temperature or -18.0))
+
+    @staticmethod
+    def json_schema():
+        """Return JSON schema for validating shipment payload"""
+        schema = {
+            "type": "object",
+            "required": ["name", "origin", "destination"],
+        }
+        props = schema["properties"] = {}
+
+        props["name"] = {
+            "description": "Shipment name",
+            "type": "string",
+        }
+        props["origin"] = {
+            "description": "Shipment origin",
+            "type": "string",
+        }
+        props["destination"] = {
+            "description": "Shipment destination",
+            "type": "string",
+        }
+        props["status"] = {
+            "description": "Shipment status",
+            "type": "string",
+        }
+        props["min_temperature"] = {
+            "description": "Shipment minimum allowed temperature",
+            "type": "number",
+        }
+        props["max_temperature"] = {
+            "description": "Shipment maximum allowed temperature",
+            "type": "number",
+        }
+        return schema
 
     # for PyLint “too few public methods”
     def __repr__(self):
@@ -68,6 +112,40 @@ class Reading(db.Model):
             "shipment_id": self.shipment_id,
             "ts": str(self.ts),
         }
+
+    def deserialize(self, doc):
+        """Populate reading fields from JSON dict"""
+        self.temp = float(doc["temp"])
+
+        if "humidity" in doc:
+            humidity = doc["humidity"]
+            self.humidity = None if humidity is None else float(humidity)
+
+        self.shipment_id = int(doc["shipment_id"])
+
+    @staticmethod
+    def json_schema():
+        """Return JSON schema for validating reading payload"""
+        schema = {
+            "type": "object",
+            # shipment_id is required for validation,
+            # but can be null in DB due to foreign key constraint (on delete set null)
+            "required": ["temp", "shipment_id"],
+        }
+        props = schema["properties"] = {}
+        props["temp"] = {
+            "description": "Measured temperature",
+            "type": "number",
+        }
+        props["humidity"] = {
+            "description": "Measured humidity",
+            "type": ["number", "null"],
+        }
+        props["shipment_id"] = {
+            "description": "Linked shipment id",
+            "type": "integer",
+        }
+        return schema
 
     def __repr__(self):
         """Return a string representation."""

@@ -3,6 +3,7 @@
 from flask import abort, jsonify, request
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
+from jsonschema import ValidationError, validate
 
 from ..extensions import db
 from ..models import Shipment, require_admin
@@ -20,14 +21,14 @@ class ShipmentResource(Resource):
             abort(415)
 
         try:
-            shipment.name = request.json["name"]
-            shipment.origin = request.json["origin"]
-            shipment.destination = request.json["destination"]
-            shipment.status = request.json.get("status", shipment.status)
-            shipment.min_temperature = float(request.json["min_temperature"])
-            shipment.max_temperature = float(request.json["max_temperature"])
+            validate(request.json, Shipment.json_schema())
+
+            shipment.deserialize(request.json)
+            db.session.add(shipment)
             db.session.commit()
-        except (KeyError, ValueError):
+        except ValidationError as e:
+            abort(400, description=str(e))
+        except ValueError:
             db.session.rollback()
             abort(400)
         except IntegrityError:
