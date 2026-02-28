@@ -2,6 +2,7 @@
 import os
 from flask import Flask, jsonify
 from .extensions import db
+from .api import api_bp
 
 def create_app():
     """Create and configure the flask app."""
@@ -14,10 +15,11 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"postgresql://{user}:{pw}"
         f"@{host}:{port}/{db_name}"
-        )
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
+    app.register_blueprint(api_bp, url_prefix="/api")
 
     @app.route("/health")
     def health():
