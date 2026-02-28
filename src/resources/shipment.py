@@ -5,26 +5,19 @@ from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import Shipment
+from ..models import Shipment, require_admin
 
 class ShipmentResource(Resource):
     """Resource for reading, updating and deleting a single shipment."""
 
-    def get(self, shipment_id: int):
+    def get(self, shipment: Shipment):
         """Return one shipment."""
-        shipment = Shipment.query.get(shipment_id)
-        if shipment is None:
-            abort(404)
         return jsonify(shipment.to_dict())
 
-    def put(self, shipment_id: int):
+    def put(self, shipment: Shipment):
         """Replace shipment fields."""
         if request.json is None:
             abort(415)
-
-        shipment = Shipment.query.get(shipment_id)
-        if shipment is None:
-            abort(404)
 
         try:
             shipment.name = request.json["name"]
@@ -43,12 +36,9 @@ class ShipmentResource(Resource):
 
         return jsonify(shipment.to_dict())
 
-    def delete(self, shipment_id: int):
+    @require_admin
+    def delete(self, shipment: Shipment):
         """Delete a shipment."""
-        shipment = Shipment.query.get(shipment_id)
-        if shipment is None:
-            abort(404)
-
         db.session.delete(shipment)
         db.session.commit()
         return "", 204

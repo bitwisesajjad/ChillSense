@@ -10,19 +10,12 @@ from ..models import Reading, Shipment
 class ReadingResource(Resource):
     """Resource for retrieving and updating a single reading."""
 
-    def get(self, reading_id: int):
+    def get(self, reading: Reading):
         """Return a single reading by id."""
-        reading = Reading.query.get(reading_id)
-        if reading is None:
-            abort(404)
         return jsonify(reading.to_dict())
 
-    def put(self, reading_id: int):
+    def put(self, reading: Reading):
         """Update an existing reading."""
-        reading = Reading.query.get(reading_id)
-        if reading is None:
-            abort(404)
-
         payload = request.get_json(silent=True) or {}
 
         if "temp" in payload:
