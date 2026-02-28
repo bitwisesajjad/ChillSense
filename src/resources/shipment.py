@@ -5,7 +5,7 @@ from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import Shipment
+from ..models import Shipment, require_admin
 
 class ShipmentResource(Resource):
     """Resource for reading, updating and deleting a single shipment."""
@@ -43,6 +43,7 @@ class ShipmentResource(Resource):
 
         return jsonify(shipment.to_dict())
 
+    @require_admin
     def delete(self, shipment_id: int):
         """Delete a shipment."""
         shipment = Shipment.query.get(shipment_id)

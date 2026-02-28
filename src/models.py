@@ -1,6 +1,10 @@
 """SQLAlchemy ORM models for the ChillSense API."""
 from datetime import datetime
 import hashlib
+import secrets
+from functools import wraps
+from flask import request
+from werkzeug.exceptions import Forbidden
 from src.extensions import db
 
 
@@ -147,3 +151,14 @@ class ApiKey(db.Model):
     def __repr__(self):
         """Return a string representation."""
         return f"<ApiKey id={self.id} shipment_id={self.shipment_id} admin={self.admin}>"
+
+def require_admin(func):
+    """Decorator to require admin API key for specified access"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        key_hash = ApiKey.key_hash(request.headers.get("Shipmenthub-Api-Key", "").strip())
+        db_key = ApiKey.query.filter_by(admin=True).first()
+        if secrets.compare_digest(key_hash, db_key.key):
+            return func(*args, **kwargs)
+        raise Forbidden
+    return wrapper
