@@ -42,7 +42,7 @@ class ReadingConverter(BaseConverter):
 
 
 @api_bp.app_errorhandler(404)
-def api_not_found():
+def api_not_found(e):
     """Return JSON 404 for all /api routes."""
     return jsonify({"message": "Not Found"}), 404
 
