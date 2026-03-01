@@ -11,27 +11,30 @@ from ..models import Reading, Shipment
 class ReadingResource(Resource):
     """Resource for retrieving and updating a single reading."""
 
-    def get(self, reading: Reading):
+    def get(self, reading: Reading, shipment: Shipment):
         """Return a single reading by id."""
+        if reading.shipment_id != shipment.id:
+            abort(404)
         return jsonify(reading.to_dict())
 
-    def put(self, reading: Reading):
+    def put(self, reading: Reading, shipment: Shipment):
         """Update an existing reading."""
         if request.json is None:
             abort(415)
 
+        payload = dict(request.json)
+        payload["shipment_id"] = shipment.id
+
         try:
-            validate(request.json, Reading.json_schema())
-            reading.deserialize(request.json)
+            validate(payload, Reading.json_schema())
+            reading.deserialize(payload)
         except ValidationError as e:
             abort(400, description=str(e))
         except (TypeError, ValueError):
             abort(400)
 
-        if reading.shipment_id is not None:
-            shipment = Shipment.query.get(reading.shipment_id)
-            if shipment is None:
-                abort(404)
+        if reading.shipment_id != shipment.id:
+            abort(400)
 
         db.session.add(reading)
         db.session.commit()
