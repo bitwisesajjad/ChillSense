@@ -8,3 +8,4 @@ env/
 *.db
 postgres/data/
 .coverage
+*cache/

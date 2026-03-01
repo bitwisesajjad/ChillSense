@@ -3,13 +3,15 @@
 import os
 from flask import Flask, jsonify
 from .api import api_bp, ShipmentConverter, ReadingConverter
-from .extensions import db
+from .extensions import db, cache
 
 def create_app(test_config=None):
     """Create and configure the flask app."""
     app = Flask(__name__)
 
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["CACHE_TYPE"] = "FileSystemCache"
+    app.config["CACHE_DIR"] = os.path.join(app.instance_path, "cache")
 
     if test_config is not None:
         app.config.update(test_config)
@@ -25,6 +27,7 @@ def create_app(test_config=None):
             )
 
     db.init_app(app)
+    cache.init_app(app)
 
     app.url_map.converters["shipment"] = ShipmentConverter
     app.url_map.converters["reading"] = ReadingConverter

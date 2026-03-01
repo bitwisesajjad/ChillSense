@@ -5,13 +5,28 @@ from sqlalchemy.exc import IntegrityError
 from flask_restful import Resource
 from jsonschema import ValidationError, validate
 
-from ..extensions import db
+from ..extensions import db, cache
 from ..models import Shipment
+
+
+def page_key(*_args, **_kwargs):
+    """Cache key for shipments page endpoint"""
+    page = request.args.get("page", 0)
+    return request.path + f"[page_{page}]"
 
 
 class ShipmentsListResource(Resource):
     """Resource for listing all shipments and creating a new shipment."""
 
+    def _clear_cache(self):
+        """Clear cached shipment collection responses"""
+        collection_path = request.path
+        cache.delete_many((
+            collection_path,
+            request.path,
+        ))
+
+    @cache.cached(timeout=None, make_cache_key=page_key)
     def get(self):
         """Return all shipments."""
         shipments = Shipment.query.order_by(Shipment.id.asc()).all()
@@ -37,6 +52,8 @@ class ShipmentsListResource(Resource):
         except IntegrityError:
             db.session.rollback()
             abort(409, description="Database integrity constraint violated")
+
+        self._clear_cache()
 
         resp = jsonify(shipment.to_dict())
         resp.status_code = 201
