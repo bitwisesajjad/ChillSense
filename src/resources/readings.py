@@ -2,6 +2,7 @@
 
 from flask import abort, jsonify, request
 from flask_restful import Resource
+from jsonschema import ValidationError, validate
 
 from ..extensions import db
 from ..models import Reading, Shipment
@@ -17,39 +18,24 @@ class ReadingsListResource(Resource):
 
     def post(self):
         """Create a new reading."""
-        payload = request.get_json(silent=True) or {}
-
-        if "temp" not in payload:
-            abort(400)
+        if request.json is None:
+            abort(415)
 
         try:
-            temp = float(payload["temp"])
+            validate(request.json, Reading.json_schema())
+
+            reading = Reading()
+            reading.deserialize(request.json)
+        except ValidationError as e:
+            abort(400, description=str(e))
         except (TypeError, ValueError):
             abort(400)
 
-        humidity = payload.get("humidity")
-        if humidity is not None:
-            try:
-                humidity = float(humidity)
-            except (TypeError, ValueError):
-                abort(400)
-
-        shipment_id = payload.get("shipment_id")
-        if shipment_id is not None:
-            try:
-                shipment_id = int(shipment_id)
-            except (TypeError, ValueError):
-                abort(400)
-
-            shipment = Shipment.query.get(shipment_id)
+        if reading.shipment_id is not None:
+            shipment = Shipment.query.get(reading.shipment_id)
             if shipment is None:
                 abort(404)
 
-        reading = Reading(
-            temp=temp,
-            humidity=humidity,
-            shipment_id=shipment_id,
-        )
         db.session.add(reading)
         db.session.commit()
 

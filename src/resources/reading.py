@@ -2,6 +2,7 @@
 
 from flask import abort, jsonify, request
 from flask_restful import Resource
+from jsonschema import ValidationError, validate
 
 from ..extensions import db
 from ..models import Reading, Shipment
@@ -16,40 +17,22 @@ class ReadingResource(Resource):
 
     def put(self, reading: Reading):
         """Update an existing reading."""
-        payload = request.get_json(silent=True) or {}
+        if request.json is None:
+            abort(415)
 
-        if "temp" in payload:
-            try:
-                reading.temp = float(payload["temp"])
-            except (TypeError, ValueError):
-                abort(400)
+        try:
+            validate(request.json, Reading.json_schema())
+            reading.deserialize(request.json)
+        except ValidationError as e:
+            abort(400, description=str(e))
+        except (TypeError, ValueError):
+            abort(400)
 
-        if "humidity" in payload:
-            humidity = payload["humidity"]
-            if humidity is None:
-                reading.humidity = None
-            else:
-                try:
-                    reading.humidity = float(humidity)
-                except (TypeError, ValueError):
-                    abort(400)
+        if reading.shipment_id is not None:
+            shipment = Shipment.query.get(reading.shipment_id)
+            if shipment is None:
+                abort(404)
 
-        if "shipment_id" in payload:
-            shipment_id = payload["shipment_id"]
-
-            if shipment_id is None:
-                reading.shipment_id = None
-            else:
-                try:
-                    shipment_id = int(shipment_id)
-                except (TypeError, ValueError):
-                    abort(400)
-
-                shipment = Shipment.query.get(shipment_id)
-                if shipment is None:
-                    abort(404)
-
-                reading.shipment_id = shipment_id
-
+        db.session.add(reading)
         db.session.commit()
         return jsonify(reading.to_dict())
