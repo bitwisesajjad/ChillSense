@@ -21,10 +21,10 @@ class ShipmentsListResource(Resource):
     def _clear_cache(self):
         """Clear cached shipment collection responses"""
         collection_path = request.path
-        cache.delete_many((
+        cache.delete_many(
             collection_path,
             request.path,
-        ))
+        )
 
     @cache.cached(timeout=None, make_cache_key=page_key)
     def get(self):

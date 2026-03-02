@@ -14,10 +14,10 @@ class ShipmentResource(Resource):
     def _clear_cache(self):
         """Clear cached shipment item and collection responses."""
         collection_path = "/api/shipments"
-        cache.delete_many((
+        cache.delete_many(
             collection_path,
             request.path,
-        ))
+        )
 
     def get(self, shipment: Shipment):
         """Return one shipment."""
