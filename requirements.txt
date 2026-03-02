@@ -10,3 +10,4 @@ pylint # For quality checks required by Teachers
 ruff # For improving code quality and style to meet the standards right above (pylint)
 black # For improving code quality and style to meet the standards right above (pylint)
 pytest
+pytest-cov
