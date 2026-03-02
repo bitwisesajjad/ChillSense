@@ -90,5 +90,4 @@ pytest --cov=src --cov-report=term-missing # Output expected as an example: TOTA
 
 ### 5. How to others
 - Cache example `http://localhost:5001/api/shipments`
-  - Then `http://localhost:5001/api/shipments?page=0` should work
-  - Also some cache files should appear in `instance/cache/`
+  - Some cache files should appear in `instance/cache/`

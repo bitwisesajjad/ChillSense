@@ -8,11 +8,12 @@ from jsonschema import ValidationError, validate
 from ..extensions import db, cache
 from ..models import Shipment
 
+SHIPMENTS_LIST_CACHE_KEY = "shipments:list" # Cache key for shipments list endpoint, we can rename it if needed
 
-def page_key(*_args, **_kwargs):
-    """Cache key for shipments page endpoint"""
-    page = request.args.get("page", 0)
-    return request.path + f"[page_{page}]"
+
+def cache_key(*_args, **_kwargs):
+    """Cache key for shipments endpoint"""
+    return SHIPMENTS_LIST_CACHE_KEY
 
 
 class ShipmentsListResource(Resource):
@@ -20,13 +21,9 @@ class ShipmentsListResource(Resource):
 
     def _clear_cache(self):
         """Clear cached shipment collection responses"""
-        collection_path = request.path
-        cache.delete_many(
-            collection_path,
-            request.path,
-        )
+        cache.delete(SHIPMENTS_LIST_CACHE_KEY)
 
-    @cache.cached(timeout=None, make_cache_key=page_key)
+    @cache.cached(timeout=None, make_cache_key=cache_key)
     def get(self):
         """Return all shipments."""
         shipments = Shipment.query.order_by(Shipment.id.asc()).all()
