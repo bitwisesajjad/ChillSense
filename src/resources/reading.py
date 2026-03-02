@@ -14,13 +14,13 @@ class ReadingResource(Resource):
     def get(self, reading: Reading, shipment: Shipment):
         """Return a single reading by id."""
         if reading.shipment_id != shipment.id:
-            abort(404)
+            abort(404, description="Reading not found for this shipment")
         return jsonify(reading.to_dict())
 
     def put(self, reading: Reading, shipment: Shipment):
         """Update an existing reading."""
         if request.json is None:
-            abort(415)
+            abort(415, description="Request must contain a valid JSON body")
 
         payload = dict(request.json)
         payload["shipment_id"] = shipment.id
@@ -31,10 +31,10 @@ class ReadingResource(Resource):
         except ValidationError as e:
             abort(400, description=str(e))
         except (TypeError, ValueError):
-            abort(400)
+            abort(400, description="Invalid reading update data")
 
         if reading.shipment_id != shipment.id:
-            abort(400)
+            abort(400, description="Reading does not belong to this shipment")
 
         db.session.add(reading)
         db.session.commit()

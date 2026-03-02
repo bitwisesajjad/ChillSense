@@ -19,7 +19,7 @@ class ReadingsListResource(Resource):
     def post(self, shipment: Shipment):
         """Create a new reading."""
         if request.json is None:
-            abort(415)
+            abort(415, description="Request must contain a valid JSON body")
 
         payload = dict(request.json)
         payload["shipment_id"] = shipment.id
@@ -32,7 +32,7 @@ class ReadingsListResource(Resource):
         except ValidationError as e:
             abort(400, description=str(e))
         except (TypeError, ValueError):
-            abort(400)
+            abort(400, description="Invalid reading data or schema validation failed")
 
         db.session.add(reading)
         db.session.commit()

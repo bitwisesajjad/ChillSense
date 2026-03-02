@@ -18,7 +18,7 @@ class ShipmentResource(Resource):
     def put(self, shipment: Shipment):
         """Replace shipment fields."""
         if request.json is None:
-            abort(415)
+            abort(415, description="Request must contain a valid JSON body")
 
         try:
             validate(request.json, Shipment.json_schema())
@@ -30,10 +30,10 @@ class ShipmentResource(Resource):
             abort(400, description=str(e))
         except ValueError:
             db.session.rollback()
-            abort(400)
+            abort(400, description="Invalid shipment update data")
         except IntegrityError:
             db.session.rollback()
-            abort(409)
+            abort(409, description="Database integrity violated")
 
         return jsonify(shipment.to_dict())
 
