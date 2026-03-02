@@ -1,6 +1,9 @@
 """
 Functional tests for Shipments API endpoints.
 """
+from sqlalchemy.exc import IntegrityError
+from src.extensions import db
+from src.models import Shipment
 
 def create_shipment(client, payload=None):
     """
@@ -79,8 +82,8 @@ def test_shipment_delete_403_without_key(client):
 
 
 def test_shipment_delete_204_with_key(client):
-    """DELETE /api/shipments/<shipment> with a valid admin API key should return 204,
-    and the shipment should not be accessible afterwards."""
+    """DELETE /api/shipments/<shipment> with a valid admin API key should return 204
+    and the shipment should not be accessible after that."""
     created = create_shipment(client).get_json()
     resp = client.delete(
         f"/api/shipments/{created['id']}",
@@ -90,3 +93,86 @@ def test_shipment_delete_204_with_key(client):
 
     resp2 = client.get(f"/api/shipments/{created['id']}")
     assert resp2.status_code == 404
+
+def test_shipments_post_409_on_integrityerror(client, monkeypatch):
+    """POST /api/shipments returns 409 when DB commit show IntegrityError."""
+    def boom():
+        raise IntegrityError("stmt", "params", "orig")
+
+    monkeypatch.setattr(db.session, "commit", boom)
+
+    resp = client.post(
+        "/api/shipments",
+        json={
+            "name": "S1",
+            "origin": "Oulu",
+            "destination": "Helsinki",
+            "min_temperature": -10,
+            "max_temperature": 5,
+        },
+    )
+    assert resp.status_code == 409
+
+
+def test_shipments_post_400_on_valueerror(client, monkeypatch):
+    """POST /api/shipments returns 400 when deserialize raises ValueError."""
+    def boom(self, doc):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr(Shipment, "deserialize", boom)
+
+    resp = client.post(
+        "/api/shipments",
+        json={
+            "name": "S1",
+            "origin": "Oulu",
+            "destination": "Helsinki",
+            "min_temperature": -10,
+            "max_temperature": 5,
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_shipment_put_409_on_integrityerror(client, monkeypatch):
+    """PUT /api/shipments/<id> returns 409 when DB commit raises IntegrityError."""
+    created = create_shipment(client).get_json()
+
+    def boom():
+        raise IntegrityError("stmt", "params", "orig")
+
+    monkeypatch.setattr(db.session, "commit", boom)
+
+    resp = client.put(
+        f"/api/shipments/{created['id']}",
+        json={
+            "name": "S1",
+            "origin": "Oulu",
+            "destination": "Helsinki",
+            "min_temperature": -10,
+            "max_temperature": 5,
+        },
+    )
+    assert resp.status_code == 409
+
+
+def test_shipment_put_400_on_valueerror(client, monkeypatch):
+    """PUT /api/shipments/<id> returns 400 when deserialize raises ValueError."""
+    created = create_shipment(client).get_json()
+
+    def boom(self, doc):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr(Shipment, "deserialize", boom)
+
+    resp = client.put(
+        f"/api/shipments/{created['id']}",
+        json={
+            "name": "S1",
+            "origin": "Oulu",
+            "destination": "Helsinki",
+            "min_temperature": -10,
+            "max_temperature": 5,
+        },
+    )
+    assert resp.status_code == 400
