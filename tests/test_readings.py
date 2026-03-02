@@ -5,7 +5,9 @@ Readings are nested under shipments:
 - /api/shipments/<shipment>/readings
 - /api/shipments/<shipment>/readings/<reading>
 """
-
+from sqlalchemy.exc import IntegrityError
+from src.extensions import db
+from src.models import Reading
 
 def create_shipment(client):
     """
@@ -100,7 +102,6 @@ def test_reading_put_updates(client):
     """
     shipment = create_shipment(client)
     reading = create_reading(client, shipment["id"]).get_json()
-
     resp = client.put(
         f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
         json={"temp": 2, "humidity": None},
@@ -129,4 +130,32 @@ def test_readings_post_400_schema_fail(client):
     """
     shipment = create_shipment(client)
     resp = client.post(f"/api/shipments/{shipment['id']}/readings", json={})
+    assert resp.status_code == 400
+
+
+def test_reading_get_404_when_shipment_mismatch(client):
+    """GET reading returns 404 if reading does not belong to shipment."""
+    s1 = create_shipment(client)
+    s2 = create_shipment(client)
+
+    r = create_reading(client, s1["id"]).get_json()
+
+    resp = client.get(f"/api/shipments/{s2['id']}/readings/{r['id']}")
+    assert resp.status_code == 404
+
+
+def test_reading_put_400_on_valueerror(client, monkeypatch):
+    """PUT reading returns 400 when deserialize raises ValueError."""
+    shipment = create_shipment(client)
+    reading = create_reading(client, shipment["id"]).get_json()
+
+    def boom(self, doc):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr(Reading, "deserialize", boom)
+
+    resp = client.put(
+        f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
+        json={"temp": 5},
+    )
     assert resp.status_code == 400
