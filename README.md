@@ -90,6 +90,33 @@ All the tests should pass and the outout must be like the following:
 15 passed in 0.14s
 ```
 
+To see the details of test coverage run:
+
+```bash
+pytest --cov=src --cov-report=term-missing
+```
+
+expected output:
+
+================================== tests coverage ==================================
+********\_\_******** coverage: platform darwin, python 3.9.6-final-0 ********\_\_********
+
+## Name Stmts Miss Cover Missing
+
+src/**init**.py 23 0 100%
+src/api.py 34 3 91% 28, 37, 41
+src/extensions.py 2 0 100%
+src/models.py 114 7 94% 88, 152, 175, 187, 200, 209, 231
+src/resources/**init**.py 0 0 100%
+src/resources/reading.py 27 3 89% 23, 32, 37
+src/resources/readings.py 28 3 89% 22, 34-35
+src/resources/shipment.py 31 2 94% 21, 30
+src/resources/shipments.py 31 1 97% 23
+
+---
+
+TOTAL 290 19 93%
+
 ## Explain
 
 ### How to create and populate the database
