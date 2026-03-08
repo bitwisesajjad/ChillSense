@@ -8,7 +8,8 @@ from jsonschema import ValidationError, validate
 from ..extensions import db, cache
 from ..models import Shipment
 
-SHIPMENTS_LIST_CACHE_KEY = "shipments:list" # Cache key for shipments list endpoint, we can rename it if needed
+# Cache key for shipments list endpoint, we can rename it if needed
+SHIPMENTS_LIST_CACHE_KEY = "shipments:list"
 
 
 def cache_key(*_args, **_kwargs):

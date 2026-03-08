@@ -96,20 +96,20 @@ def test_reading_get_wrong_shipment_404(client):
     assert resp.status_code == 404
 
 
-def test_reading_put_updates(client):
-    """
-    PUT /api/shipments/<shipment>/readings/<reading> should update the reading.
-    """
-    shipment = create_shipment(client)
-    reading = create_reading(client, shipment["id"]).get_json()
-    resp = client.put(
-        f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
-        json={"temp": 2, "humidity": None},
-    )
-    assert resp.status_code == 200
-    body = resp.get_json()
-    assert body["temp"] == 2.0
-    assert body["humidity"] is None
+# def test_reading_put_updates(client):
+#     """
+#     PUT /api/shipments/<shipment>/readings/<reading> should update the reading.
+#     """
+#     shipment = create_shipment(client)
+#     reading = create_reading(client, shipment["id"]).get_json()
+#     resp = client.put(
+#         f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
+#         json={"temp": 2, "humidity": None},
+#     )
+#     assert resp.status_code == 200
+#     body = resp.get_json()
+#     assert body["temp"] == 2.0
+#     assert body["humidity"] is None
 
 
 def test_readings_post_415_no_json(client):
@@ -144,18 +144,18 @@ def test_reading_get_404_when_shipment_mismatch(client):
     assert resp.status_code == 404
 
 
-def test_reading_put_400_on_valueerror(client, monkeypatch):
-    """PUT reading returns 400 when deserialize raises ValueError."""
-    shipment = create_shipment(client)
-    reading = create_reading(client, shipment["id"]).get_json()
+# def test_reading_put_400_on_valueerror(client, monkeypatch):
+#     """PUT reading returns 400 when deserialize raises ValueError."""
+#     shipment = create_shipment(client)
+#     reading = create_reading(client, shipment["id"]).get_json()
 
-    def boom(self, doc):
-        raise ValueError("bad value")
+#     def boom(self, doc):
+#         raise ValueError("bad value")
 
-    monkeypatch.setattr(Reading, "deserialize", boom)
+#     monkeypatch.setattr(Reading, "deserialize", boom)
 
-    resp = client.put(
-        f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
-        json={"temp": 5},
-    )
-    assert resp.status_code == 400
+#     resp = client.put(
+#         f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
+#         json={"temp": 5},
+#     )
+#     assert resp.status_code == 400

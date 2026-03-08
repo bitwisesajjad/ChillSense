@@ -5,7 +5,7 @@ from flask_restful import Resource
 from jsonschema import ValidationError, validate
 
 from ..extensions import db
-from ..models import Reading, Shipment
+from ..models import Alert, Reading, Shipment
 
 
 class ReadingsListResource(Resource):
@@ -35,9 +35,20 @@ class ReadingsListResource(Resource):
             abort(400, description="Invalid reading data or schema validation failed")
 
         db.session.add(reading)
+
+        if reading.temp < shipment.min_temperature or reading.temp > shipment.max_temperature:
+            alert = Alert(
+                msg=(
+                    f"Temperature {reading.temp}C is out of range [{shipment.min_temperature}, {shipment.max_temperature}]"
+                ),
+                shipment=shipment,
+                reading=reading,
+            )
+            db.session.add(alert)
+
         db.session.commit()
 
-        resp = jsonify(reading.to_dict())
+        resp = jsonify([reading.to_dict(), alert.to_dict()])
         resp.status_code = 201
         resp.headers["Location"] = f"/api/shipments/{shipment.id}/readings/{reading.id}"
         return resp
