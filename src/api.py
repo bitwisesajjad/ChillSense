@@ -12,7 +12,7 @@ from .resources.shipment import ShipmentResource
 from .resources.readings import ReadingsListResource
 from .resources.reading import ReadingResource
 
-from src.resources.alerts import AlertsListResource
+from .resources.alerts import AlertsListResource
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
@@ -44,7 +44,7 @@ class ReadingConverter(BaseConverter):
 
 
 @api_bp.app_errorhandler(404)
-def api_not_found(e):
+def api_not_found():
     """Return JSON 404 for all /api routes."""
     return jsonify({"message": "Not Found"}), 404
 
