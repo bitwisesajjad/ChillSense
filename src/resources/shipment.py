@@ -5,11 +5,17 @@ from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
 from jsonschema import ValidationError, validate
 
-from ..extensions import db
+from ..extensions import db, cache
 from ..models import Shipment, require_admin
+from .shipments import SHIPMENTS_LIST_CACHE_KEY
 
 class ShipmentResource(Resource):
     """Resource for reading, updating and deleting a single shipment."""
+
+    def _clear_cache(self):
+        """Clear cached shipment item and collection responses."""
+        cache.delete(SHIPMENTS_LIST_CACHE_KEY)
+        # cache.delete(request.path)
 
     def get(self, shipment: Shipment):
         """Return one shipment."""
@@ -35,6 +41,7 @@ class ShipmentResource(Resource):
             db.session.rollback()
             abort(409, description="Database integrity violated")
 
+        self._clear_cache()
         return jsonify(shipment.to_dict())
 
     @require_admin
@@ -42,4 +49,5 @@ class ShipmentResource(Resource):
         """Delete a shipment."""
         db.session.delete(shipment)
         db.session.commit()
+        self._clear_cache()
         return "", 204
