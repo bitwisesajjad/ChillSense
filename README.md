@@ -97,3 +97,10 @@ pytest --cov=src --cov-report=term-missing # Output expected as an example: TOTA
 
 #### 5.2. How to check cache
 - Access `http://localhost:5001/api/shipments` (GET request) -> Cache files then will be created in `instance/cache/` automatically.
+
+#### 5.2. How to reset DB
+```bash
+(sudo rm -rf postgres/data/)
+python db_init.py
+sudo rm -rf instance/cache/ 
+```
