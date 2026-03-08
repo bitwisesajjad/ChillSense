@@ -89,5 +89,9 @@ pytest --cov=src --cov-report=term-missing # Output expected as an example: TOTA
 ```
 
 ### 5. How to others
-- Cache example `http://localhost:5001/api/shipments`
-  - Some cache files should appear in `instance/cache/`
+#### 5.1. How to authenticate API requests
+- Use the token printed after running `python db_init.py` as an API key.
+- Add header `Shipmenthub-Api-Key`: <printed_token> to HTTP requests.
+
+#### 5.2. How to check cache
+- Access `http://localhost:5001/api/shipments` (GET request) -> Cache files then will be created in `instance/cache/` automatically.
