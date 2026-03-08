@@ -128,9 +128,7 @@ class Reading(db.Model):
         """Return JSON schema for validating reading payload"""
         schema = {
             "type": "object",
-            # shipment_id is required for validation,
-            # but can be null in DB due to foreign key constraint (on delete set null)
-            "required": ["temp", "shipment_id"],
+            "required": ["temp"],
         }
         props = schema["properties"] = {}
         props["temp"] = {
@@ -140,10 +138,6 @@ class Reading(db.Model):
         props["humidity"] = {
             "description": "Measured humidity",
             "type": ["number", "null"],
-        }
-        props["shipment_id"] = {
-            "description": "Linked shipment id",
-            "type": "integer",
         }
         return schema
 
