@@ -79,6 +79,8 @@ The tests validate:
 Tests use an in-memory SQLite database and do not require Docker.
 
 ```bash
+sudo mkdir -p instance/cache
+
 pytest -q # Output expected as an example: 15 passed in 0.14s
 
 # If pytest cannot locate the `src` package, run:
