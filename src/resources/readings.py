@@ -35,7 +35,7 @@ class ReadingsListResource(Resource):
             abort(400, description="Invalid reading data or schema validation failed")
 
         db.session.add(reading)
-
+        alert = None
         if reading.temp < shipment.min_temperature or reading.temp > shipment.max_temperature:
             alert = Alert(
                 msg=(
