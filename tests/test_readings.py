@@ -134,13 +134,12 @@ def test_readings_post_400_schema_fail(client):
 
 
 def test_reading_get_404_when_shipment_mismatch(client):
-    """GET reading returns 404 if reading does not belong to shipment."""
+    """GET reading returns 404 when reading belongs to another shipment."""
     s1 = create_shipment(client)
     s2 = create_shipment(client)
+    reading = create_reading(client, s1["id"]).get_json()
 
-    r = create_reading(client, s1["id"]).get_json()
-
-    resp = client.get(f"/api/shipments/{s2['id']}/readings/{r['id']}")
+    resp = client.get(f"/api/shipments/{s2['id']}/readings/{reading['id']}")
     assert resp.status_code == 404
 
 
@@ -149,8 +148,65 @@ def test_reading_put_400_on_valueerror(client, monkeypatch):
     shipment = create_shipment(client)
     reading = create_reading(client, shipment["id"]).get_json()
 
+    def boom(*args, **kwargs):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr(Reading, "deserialize", boom)
+
+    resp = client.put(
+        f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
+        json={"temp": 5},
+    )
+    assert resp.status_code == 400
+
+
+
+def test_reading_put_415_when_json_missing(client):
+    """PUT reading returns 415 when request body is not JSON."""
+    shipment = create_shipment(client)
+    reading = create_reading(client, shipment["id"]).get_json()
+
+    resp = client.put(
+        f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
+        data="not-json",
+        content_type="text/plain",
+    )
+    assert resp.status_code == 415
+
+
+def test_reading_put_400_when_data_invalid(client):
+    """PUT reading returns 400 when reading data is invalid."""
+    shipment = create_shipment(client)
+    reading = create_reading(client, shipment["id"]).get_json()
+
+    resp = client.put(
+        f"/api/shipments/{shipment['id']}/readings/{reading['id']}",
+        json={"temp": "bad"},
+    )
+    assert resp.status_code == 400
+
+def test_readings_post_400_on_valueerror(client, monkeypatch):
+    """POST readings returns 400 when deserialize raises ValueError."""
+    shipment = create_shipment(client)
+
     def boom(self, doc):
         raise ValueError("bad value")
+
+    monkeypatch.setattr(Reading, "deserialize", boom)
+
+    resp = client.post(
+        f"/api/shipments/{shipment['id']}/readings",
+        json={"temp": 5, "humidity": 30},
+    )
+    assert resp.status_code == 400
+
+def test_reading_put_400_on_typeerror(client, monkeypatch):
+    """PUT reading returns 400 when deserialize raises TypeError."""
+    shipment = create_shipment(client)
+    reading = create_reading(client, shipment["id"]).get_json()
+
+    def boom(*args, **kwargs):
+        raise TypeError("bad type")
 
     monkeypatch.setattr(Reading, "deserialize", boom)
 

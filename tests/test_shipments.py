@@ -176,3 +176,31 @@ def test_shipment_put_400_on_valueerror(client, monkeypatch):
         },
     )
     assert resp.status_code == 400
+
+def test_shipment_put_415_when_json_missing(client):
+    """PUT shipment returns 415 when request body is not JSON."""
+    created = create_shipment(client).get_json()
+
+    resp = client.put(
+        f"/api/shipments/{created['id']}",
+        data="not-json",
+        content_type="text/plain",
+    )
+    assert resp.status_code == 415
+
+
+def test_shipment_put_400_when_data_invalid(client):
+    """PUT shipment returns 400 when shipment data is invalid."""
+    created = create_shipment(client).get_json()
+
+    resp = client.put(
+        f"/api/shipments/{created['id']}",
+        json={
+            "name": "S1",
+            "origin": "Oulu",
+            "destination": "Helsinki",
+            "min_temperature": "bad",
+            "max_temperature": 5,
+        },
+    )
+    assert resp.status_code == 400
