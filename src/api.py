@@ -44,9 +44,9 @@ class ReadingConverter(BaseConverter):
 
 
 @api_bp.app_errorhandler(404)
-def api_not_found():
-    """Return JSON 404 for all /api routes."""
-    return jsonify({"message": "Not Found"}), 404
+def api_not_found(e):
+    """Return JSON response for 404 errors."""
+    return {"message": "Not found"}, 404
 
 api.add_resource(ShipmentsListResource, "/shipments")
 # api.add_resource(ShipmentResource, "/shipments/<int:shipment_id>")
