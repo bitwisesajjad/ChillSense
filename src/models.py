@@ -117,9 +117,8 @@ class Reading(db.Model):
         """Populate reading fields from JSON dict"""
         self.temp = float(doc["temp"])
 
-        if "humidity" in doc:
-            humidity = doc["humidity"]
-            self.humidity = None if humidity is None else float(humidity)
+        humidity = doc.get("humidity")
+        self.humidity = float(humidity) if humidity is not None else None
 
         self.shipment_id = int(doc["shipment_id"])
 
@@ -175,6 +174,34 @@ class Alert(db.Model):
             "reading_id": self.reading_id,
             "created_at": str(self.created_at),
         }
+
+    def deserialize(self, doc):
+        """Populate alert fields from JSON dict"""
+        self.msg = doc.get("msg", "")
+        self.severity = doc.get("severity", "warning")
+        self.is_resolved = doc.get("is_resolved", False)
+
+    @staticmethod
+    def json_schema():
+        """Return JSON schema for validating reading payload"""
+        schema = {
+            "type": "object",
+            "required": [],
+        }
+        props = schema["properties"] = {}
+        props["msg"] = {
+            "description": "Alert message",
+            "type": "string",
+        }
+        props["severity"] = {
+            "description": "Alert severity",
+            "type": "string",
+        }
+        props["is_resolved"] = {
+            "description": "Whether alert has been resolved",
+            "type": "boolean",
+        }
+        return schema
 
     def __repr__(self):
         """Return a string representation."""
