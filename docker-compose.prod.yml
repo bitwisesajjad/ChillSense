@@ -27,7 +27,17 @@ services:
       - FLASK_APP=src:create_app
       - GUNICORN_WORKERS=3
     command: sh -c 'gunicorn -w ${GUNICORN_WORKERS:-3} -b 0.0.0.0:5000 --access-logfile - "src:create_app()"'
-    ports:
-      - "5001:5000"
+    expose:
+      - "5000"
     depends_on:
       - postgres-db
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "5001:80"
+    depends_on:
+      - api

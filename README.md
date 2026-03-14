@@ -17,16 +17,16 @@
 # Development mode (Flask dev server, hot-reload with bind mount)
 docker compose up --build # http://localhost:5001/
 
-# Production-like mode (Gunicorn only)
-docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served directly by Gunicorn)
+# Production-like mode (NGINX + Gunicorn)
+docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served by NGINX, proxied to Gunicorn)
 ```
 
 #### 1.1. Why two Docker modes?
 
 - Development mode keeps fast iteration and current workflow (live code updates, debug enabled).
-- Production mode currently focuses on a proper application server:
+- Production mode uses a proper web-server/app-server chain:
+  - NGINX handles public HTTP traffic and reverse-proxy routing.
   - Gunicorn runs the Flask WSGI app with worker processes.
-  - NGINX can be added later when static offloading and edge proxying are needed.
 
 ### 2. How to create and populate the database
 
