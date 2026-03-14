@@ -14,9 +14,19 @@
 ### 1. How to use automatically
 
 ```bash
-docker compose up --build # docker-compose up --build # http://localhost:5001/
-docker compose up # docker-compose up
+# Development mode (Flask dev server, hot-reload with bind mount)
+docker compose up --build # http://localhost:5001/
+
+# Production-like mode (Gunicorn only)
+docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served directly by Gunicorn)
 ```
+
+#### 1.1. Why two Docker modes?
+
+- Development mode keeps fast iteration and current workflow (live code updates, debug enabled).
+- Production mode currently focuses on a proper application server:
+  - Gunicorn runs the Flask WSGI app with worker processes.
+  - NGINX can be added later when static offloading and edge proxying are needed.
 
 ### 2. How to create and populate the database
 

@@ -12,21 +12,21 @@ services:
       - ./postgres/init:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
+
   api:
     build:
       context: .
-      target: dev
-    volumes:
-      - .:/app
+      target: prod
     restart: unless-stopped
     environment:
-      - FLASK_DEBUG=1
+      - FLASK_DEBUG=0
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=coldchain
       - POSTGRES_HOST=postgres-db
       - FLASK_APP=src:create_app
-    command: flask --app src:create_app run --host=0.0.0.0 --port=5000
+      - GUNICORN_WORKERS=3
+    command: sh -c 'gunicorn -w ${GUNICORN_WORKERS:-3} -b 0.0.0.0:5000 "src:create_app()"'
     ports:
       - "5001:5000"
     depends_on:
