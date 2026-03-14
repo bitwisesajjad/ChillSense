@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify
 from flask_restful import Api
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import BaseConverter
-from .models import Shipment, Reading
+from .models import Shipment, Reading, Alert
 
 from .resources.shipments import ShipmentsListResource
 from .resources.shipment import ShipmentResource
@@ -13,6 +13,7 @@ from .resources.readings import ReadingsListResource
 from .resources.reading import ReadingResource
 
 from .resources.alerts import AlertsListResource
+from .resources.alert import AlertResource
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
@@ -41,6 +42,19 @@ class ReadingConverter(BaseConverter):
 
     def to_url(self, value):
         return str(value.id)
+    
+
+class AlertConverter(BaseConverter):
+    """Resolve alert_id from URL to an Alert ORM object."""
+
+    def to_python(self, value):
+        alert = Alert.query.filter_by(id=value).first()
+        if alert is None:
+            raise NotFound
+        return alert
+
+    def to_url(self, value):
+        return str(value.id)
 
 
 @api_bp.app_errorhandler(404)
@@ -59,3 +73,4 @@ api.add_resource(ReadingsListResource, "/shipments/<shipment:shipment>/readings"
 api.add_resource(ReadingResource, "/shipments/<shipment:shipment>/readings/<reading:reading>")
 
 api.add_resource(AlertsListResource, "/shipments/<shipment:shipment>/alerts")
+api.add_resource(AlertResource, "/shipments/<shipment:shipment>/alerts/<alert:alert>")

@@ -2,7 +2,7 @@
 
 import os
 from flask import Flask, jsonify
-from .api import api_bp, ShipmentConverter, ReadingConverter
+from .api import api_bp, ShipmentConverter, ReadingConverter, AlertConverter
 from .extensions import db, cache
 
 def create_app(test_config=None):
@@ -31,6 +31,7 @@ def create_app(test_config=None):
 
     app.url_map.converters["shipment"] = ShipmentConverter
     app.url_map.converters["reading"] = ReadingConverter
+    app.url_map.converters["alert"] = AlertConverter
 
     app.register_blueprint(api_bp, url_prefix="/api")
 
