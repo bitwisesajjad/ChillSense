@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 venv/
 env/
+.DS_Store
 
 *.db
 postgres/data/
