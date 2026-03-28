@@ -1,23 +1,27 @@
 # Meetings minutes
 
 ## Meeting 1.
-* **DATE:**
-* **PARTICIPANTS:**
-* **TEACHER:**
+
+- **DATE:**
+- **PARTICIPANTS:**
+- **TEACHER:**
 
 ### Action points
-*List here the actions points discussed with assistants*
+
+_List here the actions points discussed with assistants_
 
 ### Notes
-*Add here notes that you consider important. This is not mandatory*
 
+_Add here notes that you consider important. This is not mandatory_
 
 ## Meeting 2.
-* **DATE: 16/02/2026**
-* **PARTICIPANTS: Sajjad, Hieu**
-* **TEACHER: Iván**
+
+- **DATE: 16/02/2026**
+- **PARTICIPANTS: Sajjad, Hieu**
+- **TEACHER: Iván**
 
 ### Action points
+
 - In `models.py`:
   - Move all `relationship fields/attributes` to the end of each class for convenience
   - There is a ondelete='SET NULL' with nullable=False. Check it!
@@ -26,58 +30,63 @@
 - In `README`:
   - SHould remove `python app.py` in this phase. It will be in next phase
 - In general:
-  - Try to remove duplication script to create db 
+  - Try to remove duplication script to create db
 
 ### Notes
-*Add here notes that you consider important. This is not mandatory*
 
+_Add here notes that you consider important. This is not mandatory_
 
 ## Meeting 3.
-* **DATE:**
-* **PARTICIPANTS:**
-* **TEACHER:**
+
+- **DATE: 19/03/2026**
+- **PARTICIPANTS: Sajjad, Hieu**
+- **TEACHER: Iván**
 
 ### Action points
-*List here the actions points discussed with assistants*
+
+_Add resource connections (API links)_
+_Justify that we don't have second delete_
 
 ### Notes
-*Add here notes that you consider important. This is not mandatory*
-
 
 ## Meeting 4.
-* **DATE:**
-* **PARTICIPANTS:**
-* **TEACHER:**
+
+- **DATE:**
+- **PARTICIPANTS:**
+- **TEACHER:**
 
 ### Action points
-*List here the actions points discussed with assistants*
+
+_List here the actions points discussed with assistants_
 
 ### Notes
-*Add here notes that you consider important. This is not mandatory*
 
+_Add here notes that you consider important. This is not mandatory_
 
 ## Midterm meeting
-* **DATE:**
-* **PARTICIPANTS:**
-* **TEACHER:**
+
+- **DATE:**
+- **PARTICIPANTS:**
+- **TEACHER:**
 
 ### Action points
-*List here the actions points discussed with assistants*
+
+_List here the actions points discussed with assistants_
 
 ### Notes
-*Add here notes that you consider important. This is not mandatory*
 
+_Add here notes that you consider important. This is not mandatory_
 
 ## Final meeting
-* **DATE:**
-* **PARTICIPANTS:**
-* **TEACHER:**
+
+- **DATE:**
+- **PARTICIPANTS:**
+- **TEACHER:**
 
 ### Minutes
-*Summary of what was discussed during the meeting*
+
+_Summary of what was discussed during the meeting_
 
 ### Notes
-*Add here notes that you consider important. This is not mandatory*
 
-
-
+_Add here notes that you consider important. This is not mandatory_
