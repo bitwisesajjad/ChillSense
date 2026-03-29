@@ -19,7 +19,12 @@ class ShipmentResource(Resource):
 
     def get(self, shipment: Shipment):
         """Return one shipment."""
-        return jsonify(shipment.to_dict())
+        shipment_data = shipment.to_dict()
+        shipment_data["_links"] = {
+            "self": f"/api/shipments/{shipment.id}",
+            "readings": f"/api/shipments/{shipment.id}/readings"
+        }
+        return jsonify(shipment_data)
 
     def put(self, shipment: Shipment):
         """Replace shipment fields."""
