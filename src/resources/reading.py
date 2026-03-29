@@ -13,4 +13,9 @@ class ReadingResource(Resource):
         """Return a single reading by id."""
         if reading.shipment_id != shipment.id:
             abort(404, description="Reading not found for this shipment")
-        return jsonify(reading.to_dict())
+        reading_data = reading.to_dict()
+        reading_data["_links"] = {
+            "self": f"/api/shipments/{shipment.id}/readings/{reading.id}",
+            "shipment": f"/api/shipments/{shipment.id}"
+        }
+        return jsonify(reading_data)
