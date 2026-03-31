@@ -4,11 +4,12 @@ import os
 from flask import Flask, jsonify
 from .api import api_bp, ShipmentConverter, ReadingConverter, AlertConverter
 from .extensions import db, cache
+from flask_cors import CORS
 
 def create_app(test_config=None):
     """Create and configure the flask app."""
     app = Flask(__name__)
-
+    CORS(app, resources={r"/api/*": {"origins": "*"}}) # added this to remove the cors error on swagger
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["CACHE_TYPE"] = "FileSystemCache"
     app.config["CACHE_DIR"] = os.path.join(app.instance_path, "cache")

@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: ChillSense API
+  version: "1.0"
+  description: API for managing shipments, readings and alerts.
+
+servers:
+  - url: http://localhost:5001/api
+
+tags:
+  - name: Shipments
+  - name: Readings
+  - name: Alerts
+
+paths:
+
+  /shipments:
+    get:
+      tags: [Shipments]
+      summary: Get shipments
+      description: Get all shipments.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Shipment"
+              example:
+                - id: 1
+                  name: S1
+                  origin: Oulu
+                  destination: Helsinki
+                  status: active
+                  min_temperature: -10
+                  max_temperature: 5
+                  created_at: "2026-03-29 10:00:00"
+
+    post:
+      tags: [Shipments]
+      summary: Create shipment
+      description: Create a new shipment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipmentInput"
+            example:
+              name: S1
+              origin: Oulu
+              destination: Helsinki
+              status: active
+              min_temperature: -10
+              max_temperature: 5
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad request
+        "409":
+          description: Conflict
+        "415":
+          description: Invalid content type
+
+  /shipments/{shipmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ShipmentId"
+
+    get:
+      tags: [Shipments]
+      summary: Get shipment
+      description: Get a shipment by id.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipmentWithLinks"
+        "404":
+          description: Not found
+
+    put:
+      tags: [Shipments]
+      summary: Update shipment
+      description: Update shipment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipmentInput"
+      responses:
+        "200":
+          description: Updated
+        "400":
+          description: Bad request
+        "404":
+          description: Not found
+        "409":
+          description: Conflict
+        "415":
+          description: Invalid content type
+
+    delete:
+      tags: [Shipments]
+      summary: Delete shipment
+      description: Delete a shipment (admin only).
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /shipments/{shipmentId}/readings:
+    parameters:
+      - $ref: "#/components/parameters/ShipmentId"
+
+    get:
+      tags: [Readings]
+      summary: Get readings
+      description: Get all readings for a shipment.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reading"
+
+    post:
+      tags: [Readings]
+      summary: Create reading
+      description: Add a reading to a shipment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadingInput"
+            example:
+              temp: 10
+              humidity: 30
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad request
+        "404":
+          description: Not found
+        "415":
+          description: Invalid content type
+
+  /shipments/{shipmentId}/readings/{readingId}:
+    parameters:
+      - $ref: "#/components/parameters/ShipmentId"
+      - $ref: "#/components/parameters/ReadingId"
+
+    get:
+      tags: [Readings]
+      summary: Get reading
+      description: Get a reading by id.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingWithLinks"
+        "404":
+          description: Not found
+
+  /shipments/{shipmentId}/alerts:
+    parameters:
+      - $ref: "#/components/parameters/ShipmentId"
+
+    get:
+      tags: [Alerts]
+      summary: Get alerts
+      description: Get all alerts for a shipment.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /shipments/{shipmentId}/alerts/{alertId}:
+    parameters:
+      - $ref: "#/components/parameters/ShipmentId"
+      - $ref: "#/components/parameters/AlertId"
+
+    get:
+      tags: [Alerts]
+      summary: Get alert
+      description: Get an alert.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "404":
+          description: Not found
+
+    put:
+      tags: [Alerts]
+      summary: Update alert
+      description: Update an alert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertInput"
+      responses:
+        "200":
+          description: Updated
+        "400":
+          description: Bad request
+        "404":
+          description: Not found
+        "415":
+          description: Invalid content type
+
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Shipmenthub-Api-Key
+
+  parameters:
+    ShipmentId:
+      name: shipmentId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    ReadingId:
+      name: readingId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    AlertId:
+      name: alertId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        status:
+          type: string
+        min_temperature:
+          type: number
+        max_temperature:
+          type: number
+        created_at:
+          type: string
+
+    ShipmentInput:
+      type: object
+      properties:
+        name:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        status:
+          type: string
+        min_temperature:
+          type: number
+        max_temperature:
+          type: number
+
+    ShipmentWithLinks:
+      allOf:
+        - $ref: "#/components/schemas/Shipment"
+        - type: object
+          properties:
+            _links:
+              type: object
+
+    Reading:
+      type: object
+      properties:
+        id:
+          type: integer
+        temp:
+          type: number
+        humidity:
+          type: number
+        shipment_id:
+          type: integer
+        ts:
+          type: string
+
+    ReadingInput:
+      type: object
+      properties:
+        temp:
+          type: number
+        humidity:
+          type: number
+
+    ReadingWithLinks:
+      allOf:
+        - $ref: "#/components/schemas/Reading"
+        - type: object
+          properties:
+            _links:
+              type: object
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        msg:
+          type: string
+        severity:
+          type: string
+        is_resolved:
+          type: boolean
+        shipment_id:
+          type: integer
+        reading_id:
+          type: integer
+        created_at:
+          type: string
+
+    AlertInput:
+      type: object
+      properties:
+        msg:
+          type: string
+        severity:
+          type: string
+        is_resolved:
+          type: boolean

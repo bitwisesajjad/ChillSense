@@ -2,6 +2,7 @@ Flask
 Flask-RESTful
 Flask-SQLAlchemy
 SQLAlchemy
+
 #pysqlite3-binary
 psycopg2-binary
 jsonschema
@@ -14,3 +15,4 @@ pytest-cov
 
 Flask-Caching
 gunicorn
+Flask-CORS

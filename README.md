@@ -15,7 +15,10 @@
 
 ```bash
 # Development mode (Flask dev server, hot-reload with bind mount)
-docker compose up --build # http://localhost:5001/
+
+docker compose down -v --remove-orphans
+docker compose build --no-cache
+docker compose up # http://localhost:5001/
 
 # Production-like mode (NGINX + Gunicorn)
 docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served by NGINX, proxied to Gunicorn)
