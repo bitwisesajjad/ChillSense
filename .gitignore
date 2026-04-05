@@ -10,3 +10,4 @@ env/
 postgres/data/
 .coverage
 *cache/
+csc-venv/

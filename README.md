@@ -19,6 +19,7 @@
 docker compose down -v --remove-orphans
 docker compose build --no-cache
 docker compose up # http://localhost:5001/
+# Swagger UI: http://localhost:5001/apidocs/
 
 # Production-like mode (NGINX + Gunicorn)
 docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served by NGINX, proxied to Gunicorn)
@@ -291,4 +292,65 @@ docker compose down -v --remove-orphans
 docker builder prune -f
 docker compose up --build
 python db_init.py
+```
+
+## Cloud Deployment (Production)
+
+The API is live at: http://34.88.97.198:5001/api/shipments
+
+### How to update the server after pushing changes to GitHub
+
+SSH into the VM, then:
+
+```bash
+cd ChillSense
+git pull
+docker-compose -f docker-compose.prod.yml up --build -d
+```
+
+If you also changed static files or need a full clean restart:
+
+```bash
+docker-compose -f docker-compose.prod.yml down
+git pull
+docker-compose -f docker-compose.prod.yml up --build -d
+```
+
+### How to clear the cache
+
+The API uses Flask-Caching with FileSystemCache. If GET /api/shipments returns stale data, clear the cache:
+
+```bash
+docker-compose -f docker-compose.prod.yml exec api rm -rf /app/instance/cache/
+```
+
+### How to stop everything
+
+```bash
+docker-compose -f docker-compose.prod.yml down
+```
+
+### How to stop and wipe everything (full reset including database)
+
+```bash
+docker-compose -f docker-compose.prod.yml down -v --remove-orphans
+sudo rm -rf postgres/data/
+```
+
+### How to check container status
+
+```bash
+docker-compose -f docker-compose.prod.yml ps
+```
+
+### How to follow live logs
+
+```bash
+docker-compose -f docker-compose.prod.yml logs -f api
+```
+
+### How to check health of a specific container
+
+```bash
+docker inspect <container_name> --format='{{.State.Health.Status}}'
 ```

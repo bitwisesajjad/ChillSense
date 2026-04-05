@@ -16,3 +16,4 @@ pytest-cov
 Flask-Caching
 gunicorn
 Flask-CORS
+flask-swagger-ui
