@@ -44,7 +44,7 @@ _Add here notes that you consider important. This is not mandatory_
 
 ### Action points
 
-_Add resource connections (API links)_
+_Add resource connections (API links)_ DONE
 _Justify that we don't have second delete_
 
 ### Notes

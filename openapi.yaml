@@ -1,3 +1,4 @@
+---
 openapi: 3.0.3
 info:
   title: ChillSense API
@@ -37,6 +38,14 @@ paths:
                   min_temperature: -10
                   max_temperature: 5
                   created_at: "2026-03-29 10:00:00"
+                - id: 2
+                  name: S2
+                  origin: Tampere
+                  destination: Helsinki
+                  status: delivered
+                  min_temperature: -25
+                  max_temperature: -18
+                  created_at: "2026-03-30 08:00:00"
 
     post:
       tags: [Shipments]
@@ -58,6 +67,24 @@ paths:
       responses:
         "201":
           description: Created
+          headers:
+            Location:
+              description: URL of the created shipment
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+              example:
+                id: 1
+                name: S1
+                origin: Oulu
+                destination: Helsinki
+                status: active
+                min_temperature: -10
+                max_temperature: 5
+                created_at: "2026-03-29 10:00:00"
         "400":
           description: Bad request
         "409":
@@ -80,22 +107,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ShipmentWithLinks"
+              example:
+                id: 1
+                name: S1
+                origin: Oulu
+                destination: Helsinki
+                status: active
+                min_temperature: -10
+                max_temperature: 5
+                created_at: "2026-03-29 10:00:00"
+                _links:
+                  self: /api/shipments/1
+                  readings: /api/shipments/1/readings
         "404":
           description: Not found
 
     put:
       tags: [Shipments]
       summary: Update shipment
-      description: Update shipment.
+      description: Update shipment. Returns the updated shipment.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ShipmentInput"
+            example:
+              name: S1-updated
+              origin: Oulu
+              destination: Tampere
+              status: active
+              min_temperature: -20
+              max_temperature: 2
       responses:
         "200":
           description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+              example:
+                id: 1
+                name: S1-updated
+                origin: Oulu
+                destination: Tampere
+                status: active
+                min_temperature: -20
+                max_temperature: 2
+                created_at: "2026-03-29 10:00:00"
         "400":
           description: Bad request
         "404":
@@ -136,11 +195,26 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Reading"
+              example:
+                - id: 1
+                  temp: -5.2
+                  humidity: 60.0
+                  shipment_id: 1
+                  ts: "2026-03-29 10:05:00"
+                - id: 2
+                  temp: 8.1
+                  humidity: null
+                  shipment_id: 1
+                  ts: "2026-03-29 10:10:00"
+        "404":
+          description: Not found
 
     post:
       tags: [Readings]
       summary: Create reading
-      description: Add a reading to a shipment.
+      description: >
+        Add a reading to a shipment. If the temperature is outside the shipment's
+        allowed range, an alert is also created and returned alongside the reading.
       requestBody:
         required: true
         content:
@@ -152,7 +226,41 @@ paths:
               humidity: 30
       responses:
         "201":
-          description: Created
+          description: Created. Returns a list with the reading and alert (if triggered).
+          headers:
+            Location:
+              description: URL of the created reading
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingPostResponse"
+              examples:
+                with_alert:
+                  summary: Reading that triggered an alert
+                  value:
+                    - id: 3
+                      temp: 10.0
+                      humidity: 30.0
+                      shipment_id: 1
+                      ts: "2026-03-29 10:15:00"
+                    - id: 1
+                      msg: "Temperature 10.0C is out of range [-10, 5]"
+                      severity: warning
+                      is_resolved: false
+                      shipment_id: 1
+                      reading_id: 3
+                      created_at: "2026-03-29 10:15:00"
+                without_alert:
+                  summary: Reading within acceptable range (no alert)
+                  value:
+                    - id: 4
+                      temp: 0.0
+                      humidity: 55.0
+                      shipment_id: 1
+                      ts: "2026-03-29 10:20:00"
+                    - null
         "400":
           description: Bad request
         "404":
@@ -176,6 +284,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadingWithLinks"
+              example:
+                id: 1
+                temp: -5.2
+                humidity: 60.0
+                shipment_id: 1
+                ts: "2026-03-29 10:05:00"
+                _links:
+                  self: /api/shipments/1/readings/1
+                  shipment: /api/shipments/1
         "404":
           description: Not found
 
@@ -196,6 +313,29 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Alert"
+              examples:
+                unresolved:
+                  summary: Unresolved alert
+                  value:
+                    - id: 1
+                      msg: "Temperature 10.0C is out of range [-10, 5]"
+                      severity: warning
+                      is_resolved: false
+                      shipment_id: 1
+                      reading_id: 3
+                      created_at: "2026-03-29 10:15:00"
+                resolved:
+                  summary: Resolved alert
+                  value:
+                    - id: 1
+                      msg: "Resolved"
+                      severity: critical
+                      is_resolved: true
+                      shipment_id: 1
+                      reading_id: 3
+                      created_at: "2026-03-29 10:15:00"
+        "404":
+          description: Not found
 
   /shipments/{shipmentId}/alerts/{alertId}:
     parameters:
@@ -213,22 +353,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Alert"
+              examples:
+                unresolved:
+                  summary: Unresolved alert
+                  value:
+                    id: 1
+                    msg: "Temperature 10.0C is out of range [-10, 5]"
+                    severity: warning
+                    is_resolved: false
+                    shipment_id: 1
+                    reading_id: 3
+                    created_at: "2026-03-29 10:15:00"
+                resolved:
+                  summary: Resolved alert
+                  value:
+                    id: 1
+                    msg: "Resolved"
+                    severity: critical
+                    is_resolved: true
+                    shipment_id: 1
+                    reading_id: 3
+                    created_at: "2026-03-29 10:15:00"
         "404":
           description: Not found
 
     put:
       tags: [Alerts]
       summary: Update alert
-      description: Update an alert.
+      description: Update an alert. Returns the updated alert.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AlertInput"
+            example:
+              msg: Resolved
+              severity: critical
+              is_resolved: true
       responses:
         "200":
           description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+              example:
+                id: 1
+                msg: Resolved
+                severity: critical
+                is_resolved: true
+                shipment_id: 1
+                reading_id: 3
+                created_at: "2026-03-29 10:15:00"
         "400":
           description: Bad request
         "404":
@@ -290,6 +467,10 @@ components:
 
     ShipmentInput:
       type: object
+      required:
+        - name
+        - origin
+        - destination
       properties:
         name:
           type: string
@@ -311,6 +492,11 @@ components:
           properties:
             _links:
               type: object
+              properties:
+                self:
+                  type: string
+                readings:
+                  type: string
 
     Reading:
       type: object
@@ -321,6 +507,7 @@ components:
           type: number
         humidity:
           type: number
+          nullable: true
         shipment_id:
           type: integer
         ts:
@@ -328,11 +515,14 @@ components:
 
     ReadingInput:
       type: object
+      required:
+        - temp
       properties:
         temp:
           type: number
         humidity:
           type: number
+          nullable: true
 
     ReadingWithLinks:
       allOf:
@@ -341,6 +531,19 @@ components:
           properties:
             _links:
               type: object
+              properties:
+                self:
+                  type: string
+                shipment:
+                  type: string
+
+    ReadingPostResponse:
+      type: array
+      description: Array containing the created reading and the alert (or null if no alert was triggered).
+      items:
+        nullable: true
+      minItems: 2
+      maxItems: 2
 
     Alert:
       type: object

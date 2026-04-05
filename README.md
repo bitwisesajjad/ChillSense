@@ -280,3 +280,15 @@ pytest -q tests/test_shipments.py -k "delete"
 pytest -q tests/test_readings.py -k "get or post"
 pytest -q tests/test_alerts.py -k "get or put or post"
 ```
+
+### All DL4 codes in order
+
+```bash
+sudo rm -rf postgres/data/
+sudo rm -rf instance/cache/
+
+docker compose down -v --remove-orphans
+docker builder prune -f
+docker compose up --build
+python db_init.py
+```
