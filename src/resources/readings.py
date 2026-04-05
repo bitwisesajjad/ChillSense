@@ -49,8 +49,8 @@ class ReadingsListResource(Resource):
             db.session.add(alert)
 
         db.session.commit()
-
-        resp = jsonify([reading.to_dict(), alert.to_dict()])
+        # alert is None if temp was in range, so we return null instead of crashing
+        resp = jsonify([reading.to_dict(), alert.to_dict() if alert is not None else None])
         resp.status_code = 201
         resp.headers["Location"] = f"/api/shipments/{shipment.id}/readings/{reading.id}"
         return resp
