@@ -19,6 +19,7 @@
 docker compose down -v --remove-orphans
 docker compose build --no-cache
 docker compose up # http://localhost:5001/
+# Swagger UI: http://localhost:5001/apidocs/
 
 # Production-like mode (NGINX + Gunicorn)
 docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served by NGINX, proxied to Gunicorn)

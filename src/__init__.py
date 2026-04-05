@@ -1,7 +1,10 @@
 """Application factory for API."""
 
 import os
-from flask import Flask, jsonify
+from pathlib import Path
+
+from flask import Flask, jsonify, send_file
+from flask_swagger_ui import get_swaggerui_blueprint
 from .api import api_bp, ShipmentConverter, ReadingConverter, AlertConverter
 from .extensions import db, cache
 from flask_cors import CORS
@@ -9,7 +12,7 @@ from flask_cors import CORS
 def create_app(test_config=None):
     """Create and configure the flask app."""
     app = Flask(__name__)
-    CORS(app, resources={r"/api/*": {"origins": "*"}}) # added this to remove the cors error on swagger
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["CACHE_TYPE"] = "FileSystemCache"
     app.config["CACHE_DIR"] = os.path.join(app.instance_path, "cache")
@@ -35,6 +38,21 @@ def create_app(test_config=None):
     app.url_map.converters["alert"] = AlertConverter
 
     app.register_blueprint(api_bp, url_prefix="/api")
+
+    # Only expose Swagger UI and spec in debug/development mode
+    if app.debug or app.config.get("DEBUG") or os.environ.get("FLASK_DEBUG") == "1":
+        swaggerui_bp = get_swaggerui_blueprint(
+            "/apidocs",
+            "/openapi.yaml",
+            config={"app_name": "ChillSense API"},
+        )
+        app.register_blueprint(swaggerui_bp, url_prefix="/apidocs")
+
+        @app.route("/openapi.yaml")
+        def openapi_spec():
+            """Serve OpenAPI spec used by Swagger UI."""
+            project_root = Path(__file__).resolve().parent.parent
+            return send_file(project_root / "openapi.yaml", mimetype="application/yaml")
 
     @app.route("/health")
     def health():
