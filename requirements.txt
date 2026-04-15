@@ -2,6 +2,7 @@ Flask
 Flask-RESTful
 Flask-SQLAlchemy
 SQLAlchemy
+requests
 
 #pysqlite3-binary
 psycopg2-binary
