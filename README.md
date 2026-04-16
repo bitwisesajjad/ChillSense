@@ -21,18 +21,36 @@ docker compose build --no-cache
 docker compose up # http://localhost:5001/
 # Swagger UI: http://localhost:5001/apidocs/
 
+# The `mock-sensor` service is included in docker-compose and sends
+# periodic fake readings to /api/shipments/1/readings.
+# It intentionally sends out-of-range temperatures every few cycles
+# to trigger alerts for demonstration.
+
 # Production-like mode (NGINX + Gunicorn)
 docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served by NGINX, proxied to Gunicorn)
 ```
 
-#### 1.1. Why two Docker modes?
+#### 1.1. Mock sensor service configuration
+
+The service lives in `mock-service/sender.py` and uses `requests.Session()`
+with automatic retry + session reset for transient network/session failures.
+
+You can tune behavior in `docker-compose.yml` via environment variables:
+
+- `MOCK_SHIPMENT_ID` (default `1`)
+- `MOCK_INTERVAL_SECONDS` (default `8`)
+- `MOCK_ALERT_EVERY` (default `6`)
+- `MOCK_MAX_RETRIES` (default `4`)
+- `MOCK_BACKOFF_SECONDS` (default `1`)
+
+#### 1.2. Why two Docker modes?
 
 - Development mode keeps fast iteration and current workflow (live code updates, debug enabled).
 - Production mode uses a proper web-server/app-server chain:
   - NGINX handles public HTTP traffic and reverse-proxy routing.
   - Gunicorn runs the Flask WSGI app with worker processes.
 
-#### 1.2. Monitor and control checks (production mode)
+#### 1.3. Monitor and control checks (production mode)
 
 Use these commands after starting production mode:
 
