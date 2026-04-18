@@ -34,7 +34,7 @@ services:
 
   mock-sensor:
     build:
-      context: ./services/mock-sensor
+      context: ./services/mock_sensor
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:

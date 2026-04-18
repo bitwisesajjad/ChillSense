@@ -21,7 +21,7 @@ docker compose build --no-cache
 docker compose up # http://localhost:5001/
 # Swagger UI: http://localhost:5001/apidocs/
 
-# The `mock-sensor` service is included in docker-compose and sends
+# The `mock_sensor` service is included in docker-compose and sends
 # periodic fake readings to /api/shipments/1/readings.
 # It intentionally sends out-of-range temperatures every few cycles
 # to trigger alerts for demonstration.
@@ -32,7 +32,7 @@ docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (s
 
 #### 1.1. Mock sensor service configuration
 
-The service lives in `services/mock-sensor/sender.py` and uses `requests.Session()`
+The service lives in `services/mock_sensor/sender.py` and uses `requests.Session()`
 with automatic retry + session reset for transient network/session failures.
 
 You can tune behavior in `docker-compose.yml` via environment variables:
