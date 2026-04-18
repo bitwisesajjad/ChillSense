@@ -32,7 +32,7 @@ docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (s
 
 #### 1.1. Mock sensor service configuration
 
-The service lives in `mock-service/sender.py` and uses `requests.Session()`
+The service lives in `services/mock-sensor/sender.py` and uses `requests.Session()`
 with automatic retry + session reset for transient network/session failures.
 
 You can tune behavior in `docker-compose.yml` via environment variables:
