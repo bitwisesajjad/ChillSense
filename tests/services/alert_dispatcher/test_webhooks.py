@@ -109,3 +109,11 @@ def test_webhooks_put_returns_404_for_unknown_id(webhook_client):
     resp = webhook_client.put("/webhooks/99999", json={"status": 0})
 
     assert resp.status_code == 404
+
+
+@pytest.mark.parametrize("payload", [{}, {"status": 0, "name": "telegram"}, None])
+def test_webhooks_put_rejects_payload_with_missing_or_extra_fields(webhook_client, payload):
+    """PUT /webhooks/<id> accepts only a single 'status' field."""
+    resp = webhook_client.put("/webhooks/1", json=payload)
+
+    assert resp.status_code == 400
