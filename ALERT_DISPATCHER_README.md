@@ -7,6 +7,24 @@ This is a minimal alert-dispatcher service for managing webhooks and delivery lo
 - Log alert deliveries to webhooks
 - SQLite database, no migrations, no over-engineering
 
+## Run with Docker Compose
+
+The service is now included as `alert-dispatcher` in `docker-compose.yml`.
+
+1. Start the stack:
+
+```bash
+docker compose up --build
+```
+
+2. Access the service:
+
+- API: `http://localhost:5002/webhooks`
+- Swagger UI: `http://localhost:5002/apidocs/`
+
+At container startup, the service runs `python3 -m services.alert_dispatcher.init_db`
+to create the SQLite database file and seed webhook rows automatically.
+
 ## How to initialize and seed the database
 
 1. **Install dependencies** (if not already):
@@ -40,7 +58,7 @@ python3 -c "import sqlite3; print(list(sqlite3.connect('services/alert_dispatche
 - Deliveries can only be inserted (no update/delete).
 
 ## Notes
-- No Docker or external DB required; everything is local and file-based.
+- Uses local SQLite for service data (`services/alert_dispatcher/alert_dispatcher.db`).
 - You can safely re-run the init script; it will not duplicate webhooks.
 - For integration, import and use the models in `services/alert_dispatcher/models.py`.
 

@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Alert Dispatcher API
+  version: 1.0.0
+  description: Minimal API for listing seeded webhooks.
+servers:
+  - url: /
+paths:
+  /webhooks:
+    get:
+      summary: List webhooks
+      description: Return all seeded webhook rows.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    target_url:
+                      type: string
+                    status:
+                      type: integer
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - name
+                    - target_url
+                    - status
+                    - created_at
+                    - updated_at

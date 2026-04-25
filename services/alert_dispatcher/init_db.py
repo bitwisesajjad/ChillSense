@@ -1,21 +1,8 @@
 """Create SQLite tables and seed initial webhook data for alert dispatcher."""
 
-from pathlib import Path
-
-from flask import Flask
-
+from . import create_app
 from .extensions import db
 from .models import Webhook
-
-
-def _create_app():
-    """Create a minimal Flask app for DB initialization."""
-    app = Flask(__name__)
-    db_file = Path(__file__).resolve().parent / "alert_dispatcher.db"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.init_app(app)
-    return app
 
 
 def _seed_webhooks():
@@ -43,7 +30,7 @@ def _seed_webhooks():
 
 def init_db():
     """Create tables and seed initial data."""
-    app = _create_app()
+    app = create_app()
     with app.app_context():
         db.create_all()
         _seed_webhooks()

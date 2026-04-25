@@ -32,6 +32,20 @@ services:
     depends_on:
       - postgres-db
 
+  alert-dispatcher:
+    build:
+      context: .
+      dockerfile: services/alert_dispatcher/Dockerfile
+    restart: unless-stopped
+    environment:
+      - FLASK_DEBUG=1
+      - FLASK_APP=services.alert_dispatcher:create_app
+    command: >
+      sh -c "python3 -m services.alert_dispatcher.init_db &&
+      flask --app services.alert_dispatcher:create_app run --host=0.0.0.0 --port=5002"
+    ports:
+      - "5002:5002"
+
   mock-sensor:
     build:
       context: ./services/mock_sensor

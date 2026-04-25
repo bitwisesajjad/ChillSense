@@ -34,6 +34,17 @@ class Webhook(db.Model):
         """Only status is expected to change for webhook rows."""
         self.status = new_status
 
+    def to_dict(self):
+        """Serialize the webhook to a JSON-friendly dict."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "target_url": self.target_url,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
 
 class Delivery(db.Model):
     """Delivery attempt for one alert to one webhook."""
