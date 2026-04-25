@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChillSense — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #eaeaea;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --accent: #009966;
+      --accent-light: #e6f7f1;
+      --danger: #ee0000;
+      --danger-light: #fff0f0;
+      --warning: #f5a623;
+      --warning-light: #fff8ee;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Geist', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+    }
+    .mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+    .dim { color: var(--text-secondary); }
+    a { color: var(--text-primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* nav */
+    nav.topnav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 32px;
+      height: 56px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    nav.topnav .brand {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    nav.topnav .brand .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    nav.topnav .links {
+      display: flex;
+      gap: 4px;
+      margin-left: 16px;
+      height: 100%;
+      align-items: stretch;
+    }
+    nav.topnav .links a {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+    nav.topnav .links a.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
+    }
+    nav.topnav .links a:hover { text-decoration: none; color: var(--text-primary); }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 32px 64px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* error banner */
+    .error-banner {
+      display: none;
+      padding: 12px 16px;
+      background: var(--danger-light);
+      border: 1px solid var(--danger);
+      border-radius: 6px;
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+
+    /* summary bar */
+    .summary-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .stat-msg {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* table */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg);
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg);
+    }
+    thead th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: var(--surface); }
+    tbody td.empty {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 24px;
+    }
+
+    /* status badges */
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .badge-active   { background: var(--accent-light); color: var(--accent); }
+    .badge-delivered{ background: #f0f0f0; color: var(--text-secondary); }
+    .badge-other    { background: var(--warning-light); color: var(--warning); }
+
+    .alert-count {
+      display: inline-block;
+      min-width: 22px;
+      text-align: center;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    .action-link {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* button */
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn:hover { background: #008055; }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface); }
+
+    /* form */
+    #form-card { display: none; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px 16px;
+      padding: 16px;
+    }
+    .form-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .form-grid input, .form-grid select {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+    .form-grid input:focus, .form-grid select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .form-actions {
+      padding: 0 16px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .form-msg { font-size: 13px; }
+    .form-msg.ok { color: var(--accent); }
+    .form-msg.err { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>ChillSense</div>
+    <div class="links">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="map.html">Map</a>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Dashboard</h1>
+    <div class="page-sub">Cold-chain shipments at a glance</div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- summary bar -->
+    <div id="summary-bar" class="summary-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total Shipments</div>
+        <div class="stat-value" id="stat-total">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active</div>
+        <div class="stat-value" id="stat-active">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Unresolved Alerts</div>
+        <div class="stat-value" id="stat-unresolved">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Latest Alert</div>
+        <div class="stat-msg" id="stat-msg">-</div>
+      </div>
+    </div>
+
+    <!-- shipments table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Shipments</div>
+        <button class="btn" id="toggle-form">New Shipment</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Route</th>
+            <th>Status</th>
+            <th>Min / Max °C</th>
+            <th>Alerts</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="shipments-tbody">
+          <tr><td colspan="8" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- new shipment form -->
+    <div class="card" id="form-card">
+      <div class="card-header">
+        <div class="card-title">New Shipment</div>
+      </div>
+      <form id="new-shipment-form">
+        <div class="form-grid">
+          <label>Name
+            <input name="name" required maxlength="100" placeholder="Truck-001" />
+          </label>
+          <label>Status
+            <select name="status">
+              <option value="active">active</option>
+              <option value="delivered">delivered</option>
+              <option value="pending">pending</option>
+            </select>
+          </label>
+          <label>Origin
+            <input name="origin" required maxlength="50" placeholder="Oulu" />
+          </label>
+          <label>Destination
+            <input name="destination" required maxlength="50" placeholder="Helsinki" />
+          </label>
+          <label>Min temperature (°C)
+            <input name="min_temperature" type="number" step="0.1" value="-10" required />
+          </label>
+          <label>Max temperature (°C)
+            <input name="max_temperature" type="number" step="0.1" value="5" required />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn">Create</button>
+          <span id="form-msg" class="form-msg"></span>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script type="module" src="./index.js"></script>
+</body>
+</html>
