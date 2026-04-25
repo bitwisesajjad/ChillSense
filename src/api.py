@@ -12,7 +12,7 @@ from .resources.shipment import ShipmentResource
 from .resources.readings import ReadingsListResource
 from .resources.reading import ReadingResource
 
-from .resources.alerts import AlertsListResource
+from .resources.alerts import AlertsGlobalListResource, AlertsListResource
 from .resources.alert import AlertResource
 
 api_bp = Blueprint("api", __name__)
@@ -72,5 +72,6 @@ api.add_resource(ReadingsListResource, "/shipments/<shipment:shipment>/readings"
 # api.add_resource(ReadingResource, "/readings/<reading:reading>")
 api.add_resource(ReadingResource, "/shipments/<shipment:shipment>/readings/<reading:reading>")
 
+api.add_resource(AlertsGlobalListResource, "/alerts")
 api.add_resource(AlertsListResource, "/shipments/<shipment:shipment>/alerts")
 api.add_resource(AlertResource, "/shipments/<shipment:shipment>/alerts/<alert:alert>")

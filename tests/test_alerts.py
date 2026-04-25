@@ -45,6 +45,23 @@ def test_alerts_get_list(client):
     assert len(data) >= 1
 
 
+def test_alerts_get_global_list(client):
+    """GET /alerts returns alerts across all shipments."""
+    s1 = create_shipment(client)
+    s2 = create_shipment(client)
+    a1 = create_alert_via_reading(client, s1["id"])
+    a2 = create_alert_via_reading(client, s2["id"])
+
+    resp = client.get("/api/alerts")
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    ids = {a["id"] for a in data}
+    assert a1["id"] in ids
+    assert a2["id"] in ids
+
+
 def test_alert_get_item(client):
     """GET single alert returns the alert."""
     shipment = create_shipment(client)
