@@ -30,14 +30,16 @@ def create_app(test_config=None):
         or app.config.get("DEBUG")
         or os.environ.get("FLASK_DEBUG") == "1"
     ):
+        openapi_url = "/dispatcher/openapi.yaml"
         swaggerui_bp = get_swaggerui_blueprint(
             "/apidocs",
-            "/openapi.yaml",
+            openapi_url,
             config={"app_name": "Alert Dispatcher API"},
         )
         app.register_blueprint(swaggerui_bp, url_prefix="/apidocs")
 
         @app.route("/openapi.yaml")
+        @app.route(openapi_url)
         def openapi_spec():
             """Serve OpenAPI spec used by Swagger UI."""
             service_root = Path(__file__).resolve().parent

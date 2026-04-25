@@ -296,6 +296,39 @@ paths:
         "404":
           description: Not found
 
+  /alerts:
+    get:
+      tags: [Alerts]
+      summary: Get all alerts
+      description: Get alerts across all shipments.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+              examples:
+                mixed_shipments:
+                  summary: Alerts from multiple shipments
+                  value:
+                    - id: 1
+                      msg: "Temperature 10.0C is out of range [-10, 5]"
+                      severity: warning
+                      is_resolved: false
+                      shipment_id: 1
+                      reading_id: 3
+                      created_at: "2026-03-29 10:15:00"
+                    - id: 2
+                      msg: "Temperature -30.0C is out of range [-25, -18]"
+                      severity: warning
+                      is_resolved: false
+                      shipment_id: 2
+                      reading_id: 4
+                      created_at: "2026-03-30 08:12:00"
+
   /shipments/{shipmentId}/alerts:
     parameters:
       - $ref: "#/components/parameters/ShipmentId"

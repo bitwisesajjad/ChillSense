@@ -4,6 +4,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY src ./src
+COPY openapi.yaml ./openapi.yaml
 EXPOSE 5000
 
 FROM base AS dev
