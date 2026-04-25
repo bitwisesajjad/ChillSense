@@ -5,6 +5,7 @@ This is a minimal alert-dispatcher service for managing webhooks and delivery lo
 ## Features
 - Manage webhooks (active/inactive)
 - Log alert deliveries to webhooks
+- Continuous polling worker for fetching alerts and dispatching webhook deliveries
 - SQLite database, no migrations, no over-engineering
 
 ## Run with Docker Compose
@@ -22,8 +23,32 @@ docker compose up --build
 - API: `http://localhost:5002/webhooks`
 - Swagger UI: `http://localhost:5002/apidocs/`
 
+3. Poller worker:
+
+- Runs inside the same `alert-dispatcher` container
+- Calls `services.alert_dispatcher.poller.dispatcher.poll_and_dispatch_alerts()` continuously
+- Poll interval is controlled by `POLL_INTERVAL_SECONDS` (default `15`)
+
 At container startup, the service runs `python3 -m services.alert_dispatcher.init_db`
 to create the SQLite database file and seed webhook rows automatically.
+
+At container startup, the command initializes DB and then starts both:
+
+- Flask API (`:5002`)
+- Poller loop (background process)
+
+## Run poller locally (without Docker)
+
+From repository root:
+
+```bash
+source .venv/bin/activate
+export CHILLSENSE_BASE_URL=http://localhost:5000
+export REQUEST_TIMEOUT_SECONDS=5
+export POLL_INTERVAL_SECONDS=15
+python3 -m services.alert_dispatcher.init_db
+python3 -m services.alert_dispatcher.poller
+```
 
 ## How to initialize and seed the database
 

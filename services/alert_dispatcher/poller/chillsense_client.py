@@ -1,4 +1,4 @@
-"""ChillSense API client for alert-dispatcher service."""
+"""ChillSense API client used by the alert-dispatcher poller."""
 
 import os
 

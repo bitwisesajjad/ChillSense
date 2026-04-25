@@ -54,6 +54,7 @@ def test_deliveries_get_returns_inserted_rows_correctly(delivery_app, delivery_c
 
         older = Delivery(
             alert_id=101,
+            shipment_id=5001,
             webhook_id=webhook.id,
             target_url="https://hooks.example.com/telegram",
             status="failed",
@@ -64,6 +65,7 @@ def test_deliveries_get_returns_inserted_rows_correctly(delivery_app, delivery_c
         )
         newer = Delivery(
             alert_id=102,
+            shipment_id=5002,
             webhook_id=webhook.id,
             target_url="https://hooks.example.com/telegram",
             status="sent",
@@ -85,6 +87,7 @@ def test_deliveries_get_returns_inserted_rows_correctly(delivery_app, delivery_c
     required_fields = {
         "id",
         "alert_id",
+        "shipment_id",
         "webhook_id",
         "target_url",
         "status",
@@ -99,12 +102,14 @@ def test_deliveries_get_returns_inserted_rows_correctly(delivery_app, delivery_c
 
     # Newest row should come first.
     assert data[0]["alert_id"] == 102
+    assert data[0]["shipment_id"] == 5002
     assert data[0]["status"] == "sent"
     assert data[0]["response_code"] == 200
     assert data[0]["error_message"] is None
     assert data[0]["attempt_count"] == 1
 
     assert data[1]["alert_id"] == 101
+    assert data[1]["shipment_id"] == 5001
     assert data[1]["status"] == "failed"
     assert data[1]["response_code"] == 500
     assert data[1]["error_message"] == "timeout"

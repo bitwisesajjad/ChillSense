@@ -44,8 +44,10 @@ services:
       - FLASK_APP=services.alert_dispatcher:create_app
       - CHILLSENSE_BASE_URL=http://api:5000
       - REQUEST_TIMEOUT_SECONDS=5
+      - POLL_INTERVAL_SECONDS=15
     command: >
       sh -c "python3 -m services.alert_dispatcher.init_db &&
+      python3 -m services.alert_dispatcher.poller &
       flask --app services.alert_dispatcher:create_app run --host=0.0.0.0 --port=5002"
     ports:
       - "5002:5002"

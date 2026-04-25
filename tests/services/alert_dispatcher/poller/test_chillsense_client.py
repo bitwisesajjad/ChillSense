@@ -1,11 +1,11 @@
-"""Tests for ChillSense client in alert-dispatcher service."""
+"""Tests for poller ChillSense API client."""
 
 from unittest.mock import Mock, patch
 
 import pytest
 import requests
 
-from services.alert_dispatcher.clients import fetch_active_alerts
+from services.alert_dispatcher.poller.chillsense_client import fetch_active_alerts
 
 
 def test_fetch_active_alerts_returns_only_unresolved_alerts(monkeypatch):
@@ -36,7 +36,10 @@ def test_fetch_active_alerts_returns_only_unresolved_alerts(monkeypatch):
         },
     ]
 
-    with patch("services.alert_dispatcher.clients.requests.get", return_value=response) as mock_get:
+    with patch(
+        "services.alert_dispatcher.poller.chillsense_client.requests.get",
+        return_value=response,
+    ) as mock_get:
         alerts = fetch_active_alerts()
 
     mock_get.assert_called_once_with("http://localhost:5000/api/alerts", timeout=3.0)
@@ -71,7 +74,7 @@ def test_fetch_active_alerts_filters_out_resolved_alerts(monkeypatch):
         }
     ]
 
-    with patch("services.alert_dispatcher.clients.requests.get", return_value=response):
+    with patch("services.alert_dispatcher.poller.chillsense_client.requests.get", return_value=response):
         alerts = fetch_active_alerts()
 
     assert alerts == []
@@ -83,8 +86,34 @@ def test_fetch_active_alerts_handles_request_failure_predictably(monkeypatch):
     monkeypatch.setenv("REQUEST_TIMEOUT_SECONDS", "5")
 
     with patch(
-        "services.alert_dispatcher.clients.requests.get",
+        "services.alert_dispatcher.poller.chillsense_client.requests.get",
         side_effect=requests.RequestException("network down"),
     ):
         with pytest.raises(RuntimeError, match="Failed to fetch alerts"):
             fetch_active_alerts()
+
+
+def test_fetch_active_alerts_requires_base_url(monkeypatch):
+    """Missing CHILLSENSE_BASE_URL raises ValueError."""
+    monkeypatch.delenv("CHILLSENSE_BASE_URL", raising=False)
+
+    with pytest.raises(ValueError, match="CHILLSENSE_BASE_URL is required"):
+        fetch_active_alerts()
+
+
+def test_fetch_active_alerts_rejects_non_numeric_timeout(monkeypatch):
+    """REQUEST_TIMEOUT_SECONDS must be parseable as float."""
+    monkeypatch.setenv("CHILLSENSE_BASE_URL", "http://localhost:5000")
+    monkeypatch.setenv("REQUEST_TIMEOUT_SECONDS", "not-a-number")
+
+    with pytest.raises(ValueError, match="REQUEST_TIMEOUT_SECONDS must be a number"):
+        fetch_active_alerts()
+
+
+def test_fetch_active_alerts_rejects_non_positive_timeout(monkeypatch):
+    """REQUEST_TIMEOUT_SECONDS must be greater than zero."""
+    monkeypatch.setenv("CHILLSENSE_BASE_URL", "http://localhost:5000")
+    monkeypatch.setenv("REQUEST_TIMEOUT_SECONDS", "0")
+
+    with pytest.raises(ValueError, match="REQUEST_TIMEOUT_SECONDS must be greater than 0"):
+        fetch_active_alerts()

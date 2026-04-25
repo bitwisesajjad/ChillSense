@@ -53,6 +53,7 @@ class Delivery(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     alert_id = db.Column(db.Integer, nullable=False)
+    shipment_id = db.Column(db.Integer, nullable=True)
     webhook_id = db.Column(
         db.Integer,
         db.ForeignKey("Webhook.id", ondelete="RESTRICT"),
@@ -68,7 +69,12 @@ class Delivery(db.Model):
     webhook = db.relationship("Webhook", back_populates="deliveries")
 
     __table_args__ = (
-        db.UniqueConstraint("alert_id", "webhook_id", name="uq_delivery_alert_webhook"),
+        db.UniqueConstraint(
+            "alert_id",
+            "shipment_id",
+            "webhook_id",
+            name="uq_delivery_alert_shipment_webhook",
+        ),
         db.CheckConstraint("status IN ('sent', 'failed')", name="ck_delivery_status"),
     )
 
@@ -77,6 +83,7 @@ class Delivery(db.Model):
         return {
             "id": self.id,
             "alert_id": self.alert_id,
+            "shipment_id": self.shipment_id,
             "webhook_id": self.webhook_id,
             "target_url": self.target_url,
             "status": self.status,
