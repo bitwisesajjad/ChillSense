@@ -72,3 +72,40 @@ def test_webhooks_get_response_structure(webhook_client):
         assert isinstance(row["status"], int)
         assert isinstance(row["created_at"], str)
         assert isinstance(row["updated_at"], str)
+
+
+def test_webhooks_put_updates_status_inactive_to_active(webhook_client):
+    """PUT /webhooks/<id> updates status from 1 to 0."""
+    before_resp = webhook_client.get("/webhooks")
+    before_data = before_resp.get_json()
+    email_row = next(row for row in before_data if row["name"] == "email")
+
+    assert email_row["status"] == 1
+    before_updated_at = email_row["updated_at"]
+
+    update_resp = webhook_client.put(
+        f"/webhooks/{email_row['id']}",
+        json={"status": 0},
+    )
+
+    assert update_resp.status_code == 200
+    updated = update_resp.get_json()
+    assert updated["id"] == email_row["id"]
+    assert updated["name"] == "email"
+    assert updated["status"] == 0
+    assert updated["updated_at"] != before_updated_at
+
+
+@pytest.mark.parametrize("payload", [{"status": 2}, {"status": -1}, {"status": "1"}])
+def test_webhooks_put_rejects_invalid_status_values(webhook_client, payload):
+    """PUT /webhooks/<id> rejects statuses outside allowed values."""
+    resp = webhook_client.put("/webhooks/1", json=payload)
+
+    assert resp.status_code == 400
+
+
+def test_webhooks_put_returns_404_for_unknown_id(webhook_client):
+    """PUT /webhooks/<id> returns 404 when webhook does not exist."""
+    resp = webhook_client.put("/webhooks/99999", json={"status": 0})
+
+    assert resp.status_code == 404

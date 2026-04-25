@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from flask import Flask, send_file
+from flask import Flask, jsonify, send_file
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from .api import api_bp
@@ -44,8 +44,14 @@ def create_app(test_config=None):
             service_root = Path(__file__).resolve().parent
             return send_file(service_root / "openapi.yaml", mimetype="application/yaml")
 
+    @app.route("/health")
+    def health():
+        """Simple health check endpoint."""
+        return jsonify({"status": "ok"})
+
     return app
 
 # FLASK_DEBUG=1 FLASK_APP=services.alert_dispatcher flask run --port 5002
 # http://localhost:5002/webhooks
 # http://localhost:5002/apidocs/
+# http://localhost:5002/health
