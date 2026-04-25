@@ -72,6 +72,20 @@ class Delivery(db.Model):
         db.CheckConstraint("status IN ('sent', 'failed')", name="ck_delivery_status"),
     )
 
+    def to_dict(self):
+        """Serialize the delivery row to a JSON-friendly dict."""
+        return {
+            "id": self.id,
+            "alert_id": self.alert_id,
+            "webhook_id": self.webhook_id,
+            "target_url": self.target_url,
+            "status": self.status,
+            "response_code": self.response_code,
+            "error_message": self.error_message,
+            "attempt_count": self.attempt_count,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
 
 # def _raise_delete_blocked(_mapper, _connection, target):
 #     """Block delete operations for immutable audit-style tables."""

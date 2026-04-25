@@ -29,7 +29,6 @@ def create_app(test_config=None):
         app.debug
         or app.config.get("DEBUG")
         or os.environ.get("FLASK_DEBUG") == "1"
-        or app.config.get("ENABLE_SWAGGER_UI") is True
     ):
         swaggerui_bp = get_swaggerui_blueprint(
             "/apidocs",

@@ -6,6 +6,53 @@ info:
 servers:
   - url: /
 paths:
+  /deliveries:
+    get:
+      summary: List deliveries
+      description: Return all delivery rows in newest-first order.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    alert_id:
+                      type: integer
+                    webhook_id:
+                      type: integer
+                    target_url:
+                      type: string
+                    status:
+                      type: string
+                      enum: [sent, failed]
+                    response_code:
+                      type: integer
+                      nullable: true
+                    error_message:
+                      type: string
+                      nullable: true
+                    attempt_count:
+                      type: integer
+                    created_at:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - alert_id
+                    - webhook_id
+                    - target_url
+                    - status
+                    - response_code
+                    - error_message
+                    - attempt_count
+                    - created_at
+
   /webhooks:
     get:
       summary: List webhooks
