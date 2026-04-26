@@ -114,3 +114,132 @@ def test_deliveries_get_returns_inserted_rows_correctly(delivery_app, delivery_c
     assert data[1]["response_code"] == 500
     assert data[1]["error_message"] == "timeout"
     assert data[1]["attempt_count"] == 2
+
+
+def test_deliveries_post_creates_row_and_returns_location(delivery_client):
+    """POST /deliveries creates a new delivery and returns 201 + Location."""
+    payload = {
+        "alert_id": 7001,
+        "shipment_id": 9001,
+        "webhook_id": 1,
+        "target_url": "https://hooks.example.com/telegram",
+        "status": "sent",
+        "response_code": 200,
+        "error_message": None,
+        "attempt_count": 1,
+    }
+
+    resp = delivery_client.post("/deliveries", json=payload)
+
+    assert resp.status_code == 201
+    created = resp.get_json()
+    assert created["alert_id"] == 7001
+    assert created["shipment_id"] == 9001
+    assert created["webhook_id"] == 1
+    assert created["status"] == "sent"
+    assert created["response_code"] == 200
+    assert created["error_message"] is None
+    assert created["attempt_count"] == 1
+    assert resp.headers["Location"] == f"/deliveries/{created['id']}"
+
+
+def test_deliveries_post_returns_existing_row_for_duplicate(delivery_client):
+    """POST /deliveries returns existing row with 200 for duplicate key."""
+    payload = {
+        "alert_id": 7002,
+        "shipment_id": 9002,
+        "webhook_id": 1,
+        "target_url": "https://hooks.example.com/telegram",
+        "status": "failed",
+        "response_code": 503,
+        "error_message": "service unavailable",
+        "attempt_count": 1,
+    }
+
+    first = delivery_client.post("/deliveries", json=payload)
+    second = delivery_client.post("/deliveries", json=payload)
+
+    assert first.status_code == 201
+    assert second.status_code == 200
+    assert second.get_json()["id"] == first.get_json()["id"]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"alert_id": 1, "webhook_id": 1, "target_url": "x", "status": "queued"},
+        {"alert_id": "1", "webhook_id": 1, "target_url": "x", "status": "sent"},
+        {
+            "alert_id": 1,
+            "webhook_id": 1,
+            "target_url": "x",
+            "status": "sent",
+            "unexpected": True,
+        },
+    ],
+)
+def test_deliveries_post_rejects_invalid_payloads(delivery_client, payload):
+    """POST /deliveries validates allowed fields and field value types."""
+    resp = delivery_client.post("/deliveries", json=payload)
+
+    assert resp.status_code == 400
+
+
+def test_deliveries_post_rejects_non_json_body(delivery_client):
+    """POST /deliveries returns 415 when request body is not JSON."""
+    resp = delivery_client.post("/deliveries", data="not-json", content_type="text/plain")
+
+    assert resp.status_code == 415
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "alert_id": 1,
+            "shipment_id": "9001",
+            "webhook_id": 1,
+            "target_url": "https://hooks.example.com/x",
+            "status": "sent",
+        },
+        {
+            "alert_id": 1,
+            "webhook_id": "1",
+            "target_url": "https://hooks.example.com/x",
+            "status": "sent",
+        },
+        {
+            "alert_id": 1,
+            "webhook_id": 1,
+            "target_url": "   ",
+            "status": "sent",
+        },
+        {
+            "alert_id": 1,
+            "webhook_id": 1,
+            "target_url": "https://hooks.example.com/x",
+            "status": "sent",
+            "response_code": "200",
+        },
+        {
+            "alert_id": 1,
+            "webhook_id": 1,
+            "target_url": "https://hooks.example.com/x",
+            "status": "sent",
+            "error_message": 123,
+        },
+        {
+            "alert_id": 1,
+            "webhook_id": 1,
+            "target_url": "https://hooks.example.com/x",
+            "status": "sent",
+            "attempt_count": 0,
+        },
+    ],
+)
+def test_deliveries_post_rejects_invalid_field_types(delivery_client, payload):
+    """POST /deliveries rejects invalid optional field types and values."""
+    resp = delivery_client.post("/deliveries", json=payload)
+
+    assert resp.status_code == 400

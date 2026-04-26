@@ -52,6 +52,89 @@ paths:
                     - error_message
                     - attempt_count
                     - created_at
+    post:
+      summary: Create delivery
+      description: Create a delivery row if a matching key does not already exist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                alert_id:
+                  type: integer
+                shipment_id:
+                  type: integer
+                  nullable: true
+                webhook_id:
+                  type: integer
+                target_url:
+                  type: string
+                status:
+                  type: string
+                  enum: [sent, failed]
+                response_code:
+                  type: integer
+                  nullable: true
+                error_message:
+                  type: string
+                  nullable: true
+                attempt_count:
+                  type: integer
+                  minimum: 1
+              required:
+                - alert_id
+                - webhook_id
+                - target_url
+                - status
+              additionalProperties: false
+      responses:
+        '201':
+          description: Delivery created
+          headers:
+            Location:
+              description: URL of the created delivery resource
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  alert_id:
+                    type: integer
+                  shipment_id:
+                    type: integer
+                    nullable: true
+                  webhook_id:
+                    type: integer
+                  target_url:
+                    type: string
+                  status:
+                    type: string
+                    enum: [sent, failed]
+                  response_code:
+                    type: integer
+                    nullable: true
+                  error_message:
+                    type: string
+                    nullable: true
+                  attempt_count:
+                    type: integer
+                  created_at:
+                    type: string
+                    format: date-time
+        '200':
+          description: Duplicate key found; existing delivery returned
+        '400':
+          description: Invalid request body
+        '409':
+          description: Duplicate conflict detected during insert
+        '415':
+          description: Request body is not valid JSON
 
   /webhooks:
     get:

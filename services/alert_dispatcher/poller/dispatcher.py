@@ -1,7 +1,10 @@
 """Core polling and dispatching logic for alert-dispatcher service."""
 
+import os
+
+import requests
+
 from .chillsense_client import fetch_active_alerts
-from ..extensions import db
 from ..models import Delivery, Webhook
 
 
@@ -15,6 +18,8 @@ def poll_and_dispatch_alerts():
     """Fetch alerts and create delivery attempts for active webhooks."""
     alerts = fetch_active_alerts()
     active_webhooks = Webhook.query.filter_by(status=0).order_by(Webhook.id.asc()).all()
+    base_url = os.getenv("ALERT_DISPATCHER_BASE_URL", "http://localhost:5002").rstrip("/")
+    timeout = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "5"))
 
     created_deliveries = 0
     skipped_duplicates = 0
@@ -46,20 +51,30 @@ def poll_and_dispatch_alerts():
             response_code = send_webhook(webhook.target_url, payload)
             status = "sent" if 200 <= response_code < 300 else "failed"
 
-            delivery = Delivery(
-                alert_id=alert_id,
-                shipment_id=shipment_id,
-                webhook_id=webhook.id,
-                target_url=webhook.target_url,
-                status=status,
-                response_code=response_code,
-                error_message=None,
-                attempt_count=1,
+            delivery_payload = {
+                "alert_id": alert_id,
+                "shipment_id": shipment_id,
+                "webhook_id": webhook.id,
+                "target_url": webhook.target_url,
+                "status": status,
+                "response_code": response_code,
+                "error_message": None,
+                "attempt_count": 1,
+            }
+            resp = requests.post(
+                f"{base_url}/deliveries",
+                json=delivery_payload,
+                timeout=timeout,
             )
-            db.session.add(delivery)
-            created_deliveries += 1
-
-    db.session.commit()
+            if resp.status_code == 201:
+                created_deliveries += 1
+            elif resp.status_code == 200:
+                skipped_duplicates += 1
+            else:
+                raise RuntimeError(
+                    f"Failed to create delivery via POST /deliveries: "
+                    f"status={resp.status_code}, body={resp.text}"
+                )
 
     return {
         "fetched_alerts": len(alerts),

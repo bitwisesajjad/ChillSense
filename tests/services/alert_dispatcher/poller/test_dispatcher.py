@@ -1,6 +1,6 @@
 """Tests for poller dispatcher business logic."""
 
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -33,35 +33,35 @@ def service_app(tmp_path):
         db.drop_all()
 
 
-def test_poll_and_dispatch_creates_successful_delivery(service_app):
-    """A new unresolved alert creates a sent delivery for each active webhook."""
-    with service_app.app_context():
-        with patch(
-            "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
-            return_value=[
-                {
-                    "alert_id": 1001,
-                    "shipment_id": 501,
-                    "severity": "critical",
-                    "message": "Temperature out of range",
-                }
-            ],
-        ):
-            summary = poll_and_dispatch_alerts()
+def test_poll_and_dispatch_creates_successful_delivery(service_app, monkeypatch):
+    """A new unresolved alert calls delivery API and increments created count."""
+    monkeypatch.setenv("ALERT_DISPATCHER_BASE_URL", "http://dispatcher:5002")
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[
+            {
+                "alert_id": 1001,
+                "shipment_id": 501,
+                "severity": "critical",
+                "message": "Temperature out of range",
+            }
+        ],
+    ), patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post",
+        return_value=Mock(status_code=201, text="created"),
+    ) as mock_post:
+        summary = poll_and_dispatch_alerts()
 
-        row = Delivery.query.filter_by(alert_id=1001).one()
-
-        assert summary == {
-            "fetched_alerts": 1,
-            "active_webhooks": 1,
-            "created_deliveries": 1,
-            "skipped_duplicates": 0,
-        }
-        assert row.status == "sent"
-        assert row.shipment_id == 501
-        assert row.response_code == 200
-        assert row.error_message is None
-        assert row.attempt_count == 1
+    assert summary == {
+        "fetched_alerts": 1,
+        "active_webhooks": 1,
+        "created_deliveries": 1,
+        "skipped_duplicates": 0,
+    }
+    assert mock_post.call_count == 1
+    assert mock_post.call_args.kwargs["timeout"] == 5.0
+    assert mock_post.call_args.kwargs["json"]["status"] == "sent"
+    assert mock_post.call_args.args[0] == "http://dispatcher:5002/deliveries"
 
 
 def test_poll_and_dispatch_skips_existing_duplicate(service_app):
@@ -88,62 +88,119 @@ def test_poll_and_dispatch_skips_existing_duplicate(service_app):
             return_value=[
                 {"alert_id": 2002, "shipment_id": 9001, "message": "Duplicate alert"}
             ],
-        ), patch("services.alert_dispatcher.poller.dispatcher.send_webhook") as mock_sender:
+        ), patch("services.alert_dispatcher.poller.dispatcher.send_webhook") as mock_sender, patch(
+            "services.alert_dispatcher.poller.dispatcher.requests.post"
+        ) as mock_post:
             summary = poll_and_dispatch_alerts()
 
-        assert summary == {
-            "fetched_alerts": 1,
-            "active_webhooks": 1,
-            "created_deliveries": 0,
-            "skipped_duplicates": 1,
-        }
+    assert summary == {
+        "fetched_alerts": 1,
+        "active_webhooks": 1,
+        "created_deliveries": 0,
+        "skipped_duplicates": 1,
+    }
+    with service_app.app_context():
         assert Delivery.query.filter_by(
             alert_id=2002,
             shipment_id=9001,
             webhook_id=webhook.id,
         ).count() == 1
-        mock_sender.assert_not_called()
+    mock_sender.assert_not_called()
+    mock_post.assert_not_called()
 
 
 def test_poll_and_dispatch_records_failed_for_non_2xx(service_app):
-    """Non-2xx fake sender response is persisted as failed delivery."""
-    with service_app.app_context():
-        with patch(
-            "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
-            return_value=[{"alert_id": 3003, "shipment_id": 7003, "message": "Any message"}],
-        ), patch("services.alert_dispatcher.poller.dispatcher.send_webhook", return_value=503):
-            summary = poll_and_dispatch_alerts()
+    """Non-2xx webhook send response is posted as failed delivery."""
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[{"alert_id": 3003, "shipment_id": 7003, "message": "Any message"}],
+    ), patch("services.alert_dispatcher.poller.dispatcher.send_webhook", return_value=503), patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post",
+        return_value=Mock(status_code=201, text="created"),
+    ) as mock_post:
+        summary = poll_and_dispatch_alerts()
 
-        row = Delivery.query.filter_by(alert_id=3003).one()
-
-        assert summary == {
-            "fetched_alerts": 1,
-            "active_webhooks": 1,
-            "created_deliveries": 1,
-            "skipped_duplicates": 0,
-        }
-        assert row.status == "failed"
-        assert row.shipment_id == 7003
-        assert row.response_code == 503
-        assert row.error_message is None
-        assert row.attempt_count == 1
+    assert summary == {
+        "fetched_alerts": 1,
+        "active_webhooks": 1,
+        "created_deliveries": 1,
+        "skipped_duplicates": 0,
+    }
+    assert mock_post.call_count == 1
+    assert mock_post.call_args.kwargs["json"]["status"] == "failed"
+    assert mock_post.call_args.kwargs["json"]["response_code"] == 503
 
 
 def test_poll_and_dispatch_handles_alert_without_shipment_id(service_app):
-    """Alerts without shipment_id are still dispatched and persisted."""
-    with service_app.app_context():
-        with patch(
-            "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
-            return_value=[{"alert_id": 4004, "shipment_id": None, "message": "No shipment context"}],
-        ):
-            summary = poll_and_dispatch_alerts()
+    """Alerts without shipment_id are still dispatched."""
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[{"alert_id": 4004, "shipment_id": None, "message": "No shipment context"}],
+    ), patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post",
+        return_value=Mock(status_code=201, text="created"),
+    ) as mock_post:
+        summary = poll_and_dispatch_alerts()
 
-        row = Delivery.query.filter_by(alert_id=4004).one()
+    assert summary == {
+        "fetched_alerts": 1,
+        "active_webhooks": 1,
+        "created_deliveries": 1,
+        "skipped_duplicates": 0,
+    }
+    assert mock_post.call_args.kwargs["json"]["shipment_id"] is None
 
-        assert summary == {
-            "fetched_alerts": 1,
-            "active_webhooks": 1,
-            "created_deliveries": 1,
-            "skipped_duplicates": 0,
-        }
-        assert row.shipment_id is None
+
+def test_poll_and_dispatch_raises_when_delivery_api_fails(service_app):
+    """Unexpected delivery API response code raises RuntimeError."""
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[{"alert_id": 5005, "shipment_id": 1005}],
+    ), patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post",
+        return_value=Mock(status_code=500, text="server error"),
+    ):
+        with pytest.raises(RuntimeError):
+            poll_and_dispatch_alerts()
+
+
+def test_poll_and_dispatch_skips_alert_without_alert_id(service_app):
+    """Alerts missing alert_id are ignored before webhook and delivery calls."""
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[{"shipment_id": 123, "message": "missing alert id"}],
+    ), patch("services.alert_dispatcher.poller.dispatcher.send_webhook") as mock_sender, patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post"
+    ) as mock_post:
+        summary = poll_and_dispatch_alerts()
+
+    assert summary == {
+        "fetched_alerts": 1,
+        "active_webhooks": 1,
+        "created_deliveries": 0,
+        "skipped_duplicates": 0,
+    }
+    mock_sender.assert_not_called()
+    mock_post.assert_not_called()
+
+
+def test_poll_and_dispatch_counts_delivery_api_duplicate_as_skipped(service_app):
+    """Delivery API returning 200 is counted as skipped duplicate."""
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[{"alert_id": 6006, "shipment_id": 16006}],
+    ), patch(
+        "services.alert_dispatcher.poller.dispatcher.Delivery.query"
+    ) as mock_query, patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post",
+        return_value=Mock(status_code=200, text="duplicate"),
+    ):
+        mock_query.filter_by.return_value.first.return_value = None
+        summary = poll_and_dispatch_alerts()
+
+    assert summary == {
+        "fetched_alerts": 1,
+        "active_webhooks": 1,
+        "created_deliveries": 0,
+        "skipped_duplicates": 1,
+    }
