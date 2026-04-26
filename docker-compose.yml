@@ -17,7 +17,7 @@ services:
       context: .
       target: dev
     volumes:
-      - ./services/alert_dispatcher:/app/services/alert_dispatcher
+      - .:/app
     restart: unless-stopped
     environment:
       - FLASK_DEBUG=1
@@ -34,10 +34,10 @@ services:
 
   alert-dispatcher:
     build:
-      context: .
-      dockerfile: services/alert_dispatcher/Dockerfile
+      context: ./services/alert_dispatcher
+      dockerfile: Dockerfile
     volumes:
-      - .:/app
+      - ./services/alert_dispatcher:/app/services/alert_dispatcher
     restart: unless-stopped
     environment:
       - FLASK_DEBUG=1
