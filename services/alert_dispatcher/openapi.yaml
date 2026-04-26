@@ -6,6 +6,43 @@ info:
 servers:
   - url: /
 paths:
+  /polling-now:
+    get:
+      summary: Trigger one polling cycle (demo only)
+      description: Demo/manual endpoint that fetches unresolved alerts from ChillSense and dispatches webhook deliveries once.
+      responses:
+        '200':
+          description: Polling finished successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Demo polling executed once
+                  summary:
+                    type: object
+                    properties:
+                      fetched_alerts:
+                        type: integer
+                      active_webhooks:
+                        type: integer
+                      created_deliveries:
+                        type: integer
+                      skipped_duplicates:
+                        type: integer
+                    required:
+                      - fetched_alerts
+                      - active_webhooks
+                      - created_deliveries
+                      - skipped_duplicates
+                required:
+                  - message
+                  - summary
+        '502':
+          description: Polling failed while calling upstream services or creating deliveries
+
   /deliveries:
     get:
       summary: List deliveries

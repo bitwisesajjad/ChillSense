@@ -40,6 +40,14 @@ docker compose up --build
 - Calls `services.alert_dispatcher.poller.dispatcher.poll_and_dispatch_alerts()` continuously
 - Poll interval is controlled by `POLL_INTERVAL_SECONDS` (default `15`)
 
+4. Demo-only manual trigger endpoint:
+
+- `GET /polling-now` is provided only for demo/manual trigger scenarios.
+- This endpoint runs exactly one poll-and-dispatch cycle immediately.
+- Do not use this endpoint as a scheduler replacement in normal production flow.
+- Example (direct service): `curl -i http://localhost:5002/polling-now`
+- Example (through nginx prod proxy): `curl -i http://localhost:5001/dispatcher/polling-now`
+
 At container startup, the service runs `python3 -m services.alert_dispatcher.init_db`
 to create the SQLite database file and seed webhook rows automatically.
 

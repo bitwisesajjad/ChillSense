@@ -77,6 +77,10 @@ Why not do this directly inside ChillSense API:
 - Running dispatch logic inside request-response endpoints can increase latency and reduce API reliability.
 - A separate service provides cleaner isolation, independent restart behavior, and independent delivery audit storage.
 
+Demo note:
+- Alert-dispatcher also exposes `GET /dispatcher/polling-now` (via nginx in production mode) for demo/manual trigger only.
+- It executes one immediate poll cycle and is not intended to replace the background poll loop scheduler.
+
 ### 2. How to create and populate the database
 
 - **ORM models and functions** are defined in `src/models.py`.
