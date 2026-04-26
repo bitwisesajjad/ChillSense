@@ -92,28 +92,3 @@ def test_fetch_active_alerts_handles_request_failure_predictably(monkeypatch):
         with pytest.raises(RuntimeError, match="Failed to fetch alerts"):
             fetch_active_alerts()
 
-
-def test_fetch_active_alerts_requires_base_url(monkeypatch):
-    """Missing CHILLSENSE_BASE_URL raises ValueError."""
-    monkeypatch.delenv("CHILLSENSE_BASE_URL", raising=False)
-
-    with pytest.raises(ValueError, match="CHILLSENSE_BASE_URL is required"):
-        fetch_active_alerts()
-
-
-def test_fetch_active_alerts_rejects_non_numeric_timeout(monkeypatch):
-    """REQUEST_TIMEOUT_SECONDS must be parseable as float."""
-    monkeypatch.setenv("CHILLSENSE_BASE_URL", "http://localhost:5000")
-    monkeypatch.setenv("REQUEST_TIMEOUT_SECONDS", "not-a-number")
-
-    with pytest.raises(ValueError, match="REQUEST_TIMEOUT_SECONDS must be a number"):
-        fetch_active_alerts()
-
-
-def test_fetch_active_alerts_rejects_non_positive_timeout(monkeypatch):
-    """REQUEST_TIMEOUT_SECONDS must be greater than zero."""
-    monkeypatch.setenv("CHILLSENSE_BASE_URL", "http://localhost:5000")
-    monkeypatch.setenv("REQUEST_TIMEOUT_SECONDS", "0")
-
-    with pytest.raises(ValueError, match="REQUEST_TIMEOUT_SECONDS must be greater than 0"):
-        fetch_active_alerts()

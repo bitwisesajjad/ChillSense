@@ -63,9 +63,9 @@ jobs:
               const alertDispatcherMatch = alertDispatcherContent.match(/TOTAL\s+\d+\s+\d+\s+(\d+%)/);
               const alertDispatcherCoverage = alertDispatcherMatch ? alertDispatcherMatch[1] : 'N/A';
 
-              body = `${marker}\n## Test Coverage\n- Coverage (src): **${srcCoverage}**\n- Coverage (services/alert_dispatcher): **${alertDispatcherCoverage}**\n- Required: **>= 96%** cho moi scope`;
+              body = `${marker}\n## Test Coverage\n- Coverage (src): **${srcCoverage}**\n- Coverage (services/alert_dispatcher): **${alertDispatcherCoverage}**\n- Required: **>= 96%** for each scope`;
             } catch (error) {
-              body = `${marker}\n## Test Coverage\nKhong doc duoc file coverage report de tao bao cao coverage.`;
+              body = `${marker}\n## Test Coverage\nUnable to read the coverage report file to generate a coverage report.`;
             }
 
             const { owner, repo } = context.repo;

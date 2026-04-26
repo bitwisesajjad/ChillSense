@@ -2,6 +2,17 @@
 
 This is a minimal alert-dispatcher service for managing webhooks and delivery logs, designed to be simple and easy to run alongside the main ChillSense app.
 
+## Why this auxiliary service is necessary
+- This service separates alert dispatching from the core ChillSense API responsibilities.
+- It handles polling, delivery attempts, and delivery logging as background work.
+- Keeping these tasks outside the main API helps keep shipment/reading endpoints responsive.
+
+## Why direct implementation in ChillSense API is problematic
+- Alert delivery is slow and unpredictable (network calls, retries, temporary failures).
+- If done directly in API request handlers, user-facing endpoints can become slower or unstable.
+- Dispatch logic needs independent operation and recovery (continuous polling loop, rollback on errors).
+- Delivery audit data (webhooks and delivery history) is operational data and is cleaner in a separate service boundary.
+
 ## Features
 - Manage webhooks (active/inactive)
 - Log alert deliveries to webhooks

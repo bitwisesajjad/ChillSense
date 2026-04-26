@@ -66,6 +66,17 @@ Notes:
 - `logs -f api` follows Gunicorn/API logs in real time.
 - `docker inspect` confirms health state (`starting`, `healthy`, or `unhealthy`) for each container.
 
+#### 1.4. Auxiliary service justification (Alert Dispatcher)
+
+- We implemented `services/alert_dispatcher` as a separate auxiliary service.
+- It polls unresolved alerts from ChillSense API and dispatches them to configured webhooks.
+- This is intentionally outside the main API server to avoid mixing core REST operations with long-running background jobs.
+
+Why not do this directly inside ChillSense API:
+- Webhook delivery depends on external networks and can be slow/fail intermittently.
+- Running dispatch logic inside request-response endpoints can increase latency and reduce API reliability.
+- A separate service provides cleaner isolation, independent restart behavior, and independent delivery audit storage.
+
 ### 2. How to create and populate the database
 
 - **ORM models and functions** are defined in `src/models.py`.

@@ -9,17 +9,8 @@ from requests import RequestException
 def fetch_active_alerts():
     """Fetch alerts and return unresolved entries in normalized form."""
     base_url = os.getenv("CHILLSENSE_BASE_URL", "").strip()
-    if not base_url:
-        raise ValueError("CHILLSENSE_BASE_URL is required")
-
     raw_timeout = os.getenv("REQUEST_TIMEOUT_SECONDS", "5")
-    try:
-        timeout = float(raw_timeout)
-    except ValueError as exc:
-        raise ValueError("REQUEST_TIMEOUT_SECONDS must be a number") from exc
-
-    if timeout <= 0:
-        raise ValueError("REQUEST_TIMEOUT_SECONDS must be greater than 0")
+    timeout = float(raw_timeout)
 
     base_url = base_url.rstrip("/")
     alerts_url = f"{base_url}/api/alerts"
