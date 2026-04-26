@@ -17,12 +17,21 @@ def send_webhook(url, payload):
 def poll_and_dispatch_alerts():
     """Fetch alerts and create delivery attempts for active webhooks."""
     alerts = fetch_active_alerts()
-    active_webhooks = Webhook.query.filter_by(status=0).order_by(Webhook.id.asc()).all()
     base_url = os.getenv("ALERT_DISPATCHER_BASE_URL", "http://localhost:5002").rstrip("/")
     timeout = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "5"))
 
     created_deliveries = 0
     skipped_duplicates = 0
+
+    if not alerts:
+        return {
+            "fetched_alerts": 0,
+            "active_webhooks": 0,
+            "created_deliveries": 0,
+            "skipped_duplicates": 0,
+        }
+
+    active_webhooks = Webhook.query.filter_by(status=0).order_by(Webhook.id.asc()).all()
 
     for alert in alerts:
         alert_id = alert.get("alert_id")

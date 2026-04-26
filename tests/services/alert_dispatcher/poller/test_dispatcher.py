@@ -204,3 +204,25 @@ def test_poll_and_dispatch_counts_delivery_api_duplicate_as_skipped(service_app)
         "created_deliveries": 0,
         "skipped_duplicates": 1,
     }
+
+
+def test_poll_and_dispatch_returns_early_when_no_alerts(service_app):
+    """No unresolved alerts should skip webhook query and delivery HTTP calls."""
+    with service_app.app_context(), patch(
+        "services.alert_dispatcher.poller.dispatcher.fetch_active_alerts",
+        return_value=[],
+    ), patch(
+        "services.alert_dispatcher.poller.dispatcher.Webhook.query"
+    ) as mock_webhook_query, patch(
+        "services.alert_dispatcher.poller.dispatcher.requests.post"
+    ) as mock_post:
+        summary = poll_and_dispatch_alerts()
+
+    assert summary == {
+        "fetched_alerts": 0,
+        "active_webhooks": 0,
+        "created_deliveries": 0,
+        "skipped_duplicates": 0,
+    }
+    mock_webhook_query.filter_by.assert_not_called()
+    mock_post.assert_not_called()
