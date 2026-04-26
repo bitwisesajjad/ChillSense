@@ -1,111 +1,171 @@
 # Alert Dispatcher Service (Auxiliary)
 
-This is a minimal alert-dispatcher service for managing webhooks and delivery logs, designed to be simple and easy to run alongside the main ChillSense app.
+This service is separated from the main ChillSense API and is responsible for polling unresolved alerts and writing delivery logs.
 
-## Why this auxiliary service is necessary
-- This service separates alert dispatching from the core ChillSense API responsibilities.
-- It handles polling, delivery attempts, and delivery logging as background work.
-- Keeping these tasks outside the main API helps keep shipment/reading endpoints responsive.
+Main project guide: [README.md](README.md)
 
-## Why direct implementation in ChillSense API is problematic
-- Alert delivery is slow and unpredictable (network calls, retries, temporary failures).
-- If done directly in API request handlers, user-facing endpoints can become slower or unstable.
-- Dispatch logic needs independent operation and recovery (continuous polling loop, rollback on errors).
-- Delivery audit data (webhooks and delivery history) is operational data and is cleaner in a separate service boundary.
+## Why this service exists
 
-## Features
-- Manage webhooks (active/inactive)
-- Log alert deliveries to webhooks
-- Continuous polling worker for fetching alerts and dispatching webhook deliveries
-- SQLite database, no migrations, no over-engineering
+- Keeps shipment/reading API endpoints focused and responsive.
+- Isolates polling and delivery responsibilities from request-response paths.
+- Stores webhook and delivery audit data in a dedicated SQLite database.
+
+## Service responsibilities
+
+- Manage webhooks (`GET /webhooks`, `PUT /webhooks/<id>`)
+- Store delivery records (`GET /deliveries`, `POST /deliveries`)
+- Poll unresolved alerts and create delivery attempts
+- Provide demo/manual trigger endpoint (`GET /polling-now`)
 
 ## Run with Docker Compose
 
-The service is now included as `alert-dispatcher` in `docker-compose.yml`.
-
-1. Start the stack:
+### 1. Development mode (`docker-compose.yml`)
 
 ```bash
+docker compose down -v --remove-orphans
 docker compose up --build
 ```
 
-2. Access the service:
+Useful endpoints in development:
 
-- API: `http://localhost:5002/webhooks`
-- Swagger UI: `http://localhost:5002/apidocs/`
+- Alert-dispatcher direct API: `http://localhost:5002/webhooks`
+- Deliveries list: `http://localhost:5002/deliveries`
+- One-shot polling: `http://localhost:5002/polling-now`
+- Swagger UI (only if debug mode is enabled): `http://localhost:5002/apidocs/`
 
-3. Poller worker:
+### 2. Production-like mode (`docker-compose.prod.yml`)
 
-- Runs inside the same `alert-dispatcher` container
-- Calls `services.alert_dispatcher.poller.dispatcher.poll_and_dispatch_alerts()` continuously
-- Poll interval is controlled by `POLL_INTERVAL_SECONDS` (default `15`)
+```bash
+docker compose -f docker-compose.prod.yml down -v --remove-orphans
+docker compose -f docker-compose.prod.yml up --build
+```
 
-4. Demo-only manual trigger endpoint:
+In production-like mode, use NGINX route for one-shot polling:
 
-- `GET /polling-now` is provided only for demo/manual trigger scenarios.
-- This endpoint runs exactly one poll-and-dispatch cycle immediately.
-- Do not use this endpoint as a scheduler replacement in normal production flow.
-- Example (direct service): `curl -i http://localhost:5002/polling-now`
-- Example (through nginx prod proxy): `curl -i http://localhost:5001/dispatcher/polling-now`
+- `http://localhost:5001/dispatcher/polling-now`
 
-At container startup, the service runs `python3 -m services.alert_dispatcher.init_db`
-to create the SQLite database file and seed webhook rows automatically.
+## How service data is created (Webhook + Delivery)
 
-At container startup, the command initializes DB and then starts both:
+Alert-dispatcher uses SQLite at `services/alert_dispatcher/alert_dispatcher.db`.
 
-- Flask API (`:5002`)
-- Poller loop (background process)
+When running with Docker Compose, data initialization is automatic when the `alert-dispatcher` container starts (for example after `docker compose up` or container recreate):
 
-## Run poller locally (without Docker)
+- `python3 -m services.alert_dispatcher.init_db`
+
+This creates tables and seeds initial webhook rows.
+
+Seeded webhooks:
+
+- `telegram` (status `0`, active)
+- `email` (status `1`, inactive)
+
+Manual re-seed (optional, only when you want to run init again explicitly):
+
+```bash
+docker compose exec alert-dispatcher python3 -m services.alert_dispatcher.init_db
+```
+
+Or locally from repo root:
+
+```bash
+source .venv/bin/activate
+python3 -m services.alert_dispatcher.init_db
+```
+
+Quick verification:
+
+```bash
+curl -s http://localhost:5002/webhooks | python3 -m json.tool
+```
+
+You should see at least the `telegram` and `email` rows.
+
+## End-to-end demo flow (required for presentation)
+
+This flow proves that alert-dispatcher receives an unresolved alert and writes delivery logs.
+
+1. Start one compose stack (dev or prod).
+2. Trigger an out-of-range reading:
+
+```bash
+curl -i -X POST http://localhost:5001/api/shipments/1/readings \
+  -H "Content-Type: application/json" \
+  -d '{"temp":999,"humidity":40}'
+```
+
+3. Trigger one immediate polling cycle (recommended):
+
+```bash
+# Development (direct to alert-dispatcher)
+curl -i http://localhost:5002/polling-now
+
+# Production-like (through nginx)
+curl -i http://localhost:5001/dispatcher/polling-now
+```
+
+4. Verify delivery history is updated:
+
+```bash
+curl -s http://localhost:5002/deliveries | python3 -m json.tool
+```
+
+Expected observation:
+
+- You should see at least one delivery row with the new `alert_id`.
+- This confirms alert-dispatcher executed and delivery logging is working.
+
+Note on polling interval:
+
+- In current compose files, `POLL_INTERVAL_SECONDS=600`.
+- If you do not call `/polling-now`, wait for the next interval before checking `/deliveries`.
+
+## Run tests (pytest)
+
+From repository root:
+
+```bash
+pytest -q tests/services/alert_dispatcher
+```
+
+By module:
+
+```bash
+pytest -q tests/services/alert_dispatcher/test_app_factory.py
+pytest -q tests/services/alert_dispatcher/test_webhooks.py
+pytest -q tests/services/alert_dispatcher/test_deliveries.py
+pytest -q tests/services/alert_dispatcher/test_polling_now.py
+pytest -q tests/services/alert_dispatcher/poller
+```
+
+Coverage focused on auxiliary service:
+
+```bash
+pytest --cov=services.alert_dispatcher --cov-report=term-missing tests/services/alert_dispatcher -q
+```
+
+If import path resolution causes issues:
+
+```bash
+PYTHONPATH=. pytest -q tests/services/alert_dispatcher
+```
+
+## Local run without Docker (optional)
 
 From repository root:
 
 ```bash
 source .venv/bin/activate
 export CHILLSENSE_BASE_URL=http://localhost:5000
+export ALERT_DISPATCHER_BASE_URL=http://localhost:5002
 export REQUEST_TIMEOUT_SECONDS=5
 export POLL_INTERVAL_SECONDS=15
 python3 -m services.alert_dispatcher.init_db
 python3 -m services.alert_dispatcher.poller
 ```
 
-## How to initialize and seed the database
-
-1. **Install dependencies** (if not already):
+In another shell:
 
 ```bash
-python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+FLASK_DEBUG=1 flask --app services.alert_dispatcher:create_app run --port 5002
 ```
-
-2. **Initialize the database** (creates `services/alert_dispatcher/alert_dispatcher.db` and seeds 2 webhooks):
-
-```bash
-python3 -m services.alert_dispatcher.init_db
-```
-
-- This will create the tables `Webhook` and `Delivery` in a local SQLite file.
-- It will also insert 2 sample webhooks:
-  - `telegram` (active)
-  - `email` (inactive)
-
-3. **Verify the database** (optional):
-
-```bash
-python3 -c "import sqlite3; print(list(sqlite3.connect('services/alert_dispatcher/alert_dispatcher.db').execute('SELECT * FROM Webhook')),)"
-```
-
-## Data handling rules
-- No delete operation is allowed for either table.
-- Webhooks can only change status (active/inactive).
-- Deliveries can only be inserted (no update/delete).
-
-## Notes
-- Uses local SQLite for service data (`services/alert_dispatcher/alert_dispatcher.db`).
-- You can safely re-run the init script; it will not duplicate webhooks.
-- For integration, import and use the models in `services/alert_dispatcher/models.py`.
-
----
-
-For more details, see the main README or the code in `services/alert_dispatcher/`.
