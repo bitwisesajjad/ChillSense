@@ -51,6 +51,40 @@ services:
       retries: 5
       start_period: 15s
 
+  alert-dispatcher:
+    build:
+      context: ./services/alert_dispatcher
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - FLASK_DEBUG=0
+      - FLASK_APP=services.alert_dispatcher:create_app
+      - CHILLSENSE_BASE_URL=http://api:5000
+      - ALERT_DISPATCHER_BASE_URL=http://alert-dispatcher:5002
+      - REQUEST_TIMEOUT_SECONDS=5
+      - POLL_INTERVAL_SECONDS=15
+    command: >
+      sh -c "python3 -m services.alert_dispatcher.init_db &&
+      python3 -m services.alert_dispatcher.poller &
+      flask --app services.alert_dispatcher:create_app run --host=0.0.0.0 --port=5002"
+    expose:
+      - "5002"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5002/health', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -60,6 +94,8 @@ services:
       - "5001:80"
     depends_on:
       api:
+        condition: service_healthy
+      alert-dispatcher:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/"]
