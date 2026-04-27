@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChillSense — Map</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #eaeaea;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --accent: #009966;
+      --accent-light: #e6f7f1;
+      --danger: #ee0000;
+      --danger-light: #fff0f0;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Geist', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+    }
+    a { color: var(--text-primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav.topnav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 32px;
+      height: 56px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    nav.topnav .brand { font-weight: 600; font-size: 15px; }
+    nav.topnav .brand .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    nav.topnav .links {
+      display: flex;
+      gap: 4px;
+      margin-left: 16px;
+      height: 100%;
+      align-items: stretch;
+    }
+    nav.topnav .links a {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+    nav.topnav .links a.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
+    }
+    nav.topnav .links a:hover { color: var(--text-primary); text-decoration: none; }
+
+    main {
+      padding: 16px 32px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 600; margin: 0; }
+    .page-sub { color: var(--text-secondary); }
+
+    .error-banner {
+      display: none;
+      padding: 12px 16px;
+      background: var(--danger-light);
+      border: 1px solid var(--danger);
+      border-radius: 6px;
+      color: var(--danger);
+      margin-bottom: 12px;
+    }
+
+    .skipped-notice {
+      display: none;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    /* map container */
+    .map-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      overflow: hidden;
+      position: relative;
+    }
+    #leaflet-map {
+      width: 100%;
+      height: calc(100vh - 200px);
+      min-height: 480px;
+      background: var(--surface);
+    }
+
+    /* legend */
+    .legend {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      z-index: 500;
+    }
+    .legend .row { display: flex; align-items: center; gap: 8px; }
+    .legend .row + .row { margin-top: 4px; }
+    .legend .swatch {
+      display: inline-block;
+      width: 18px; height: 3px;
+      border-radius: 2px;
+    }
+    .legend .swatch.safe { background: var(--accent); }
+    .legend .swatch.alert { background: var(--danger); }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>ChillSense</div>
+    <div class="links">
+      <a href="index.html">Dashboard</a>
+      <a href="map.html" class="active">Map</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <div>
+        <h1>Map</h1>
+        <div class="page-sub">Shipment routes colored by alert status</div>
+      </div>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+    <div id="skipped-notice" class="skipped-notice"></div>
+
+    <div class="map-card">
+      <div id="leaflet-map"></div>
+      <div class="legend">
+        <div class="row">
+          <span class="swatch safe"></span>
+          <span>Safe (no unresolved alerts)</span>
+        </div>
+        <div class="row">
+          <span class="swatch alert"></span>
+          <span>Alert (unresolved alerts)</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="./map.js"></script>
+</body>
+</html>

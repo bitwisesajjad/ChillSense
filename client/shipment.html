@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChillSense — Shipment Detail</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #eaeaea;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --accent: #009966;
+      --accent-light: #e6f7f1;
+      --danger: #ee0000;
+      --danger-light: #fff0f0;
+      --warning: #f5a623;
+      --warning-light: #fff8ee;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Geist', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+    }
+    .mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+    .dim { color: var(--text-secondary); }
+    a { color: var(--text-primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* nav */
+    nav.topnav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 32px;
+      height: 56px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    nav.topnav .brand { font-weight: 600; font-size: 15px; }
+    nav.topnav .brand .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    nav.topnav .links {
+      display: flex;
+      gap: 4px;
+      margin-left: 16px;
+      height: 100%;
+      align-items: stretch;
+    }
+    nav.topnav .links a {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+    nav.topnav .links a.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
+    }
+    nav.topnav .links a:hover { color: var(--text-primary); text-decoration: none; }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 32px 64px;
+    }
+
+    .breadcrumb {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .breadcrumb a { color: var(--text-secondary); }
+    .breadcrumb a:hover { color: var(--text-primary); }
+
+    h1 { font-size: 22px; font-weight: 600; margin: 4px 0 20px 0; }
+
+    .error-banner {
+      display: none;
+      padding: 12px 16px;
+      background: var(--danger-light);
+      border: 1px solid var(--danger);
+      border-radius: 6px;
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+
+    /* card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .card-title { font-weight: 600; font-size: 15px; }
+    .card-body { padding: 16px; background: var(--bg); }
+
+    /* info card layout */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg);
+    }
+    .info-grid .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .info-grid .value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg);
+    }
+    thead th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: var(--surface); }
+    tbody td.empty {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 24px;
+    }
+
+    /* badges */
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .sev-warning { background: var(--warning-light); color: var(--warning); }
+    .sev-critical { background: var(--danger-light); color: var(--danger); }
+    .sev-info { background: var(--accent-light); color: var(--accent); }
+
+    /* buttons */
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn:hover { background: #008055; }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface); }
+    .btn-danger {
+      background: var(--bg);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+    .btn-danger:hover { background: var(--danger-light); }
+
+    /* chart */
+    .chart-wrap {
+      padding: 16px;
+      background: var(--bg);
+      height: 320px;
+      position: relative;
+    }
+
+    /* simulator */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+      padding: 16px;
+      background: var(--bg);
+    }
+    .sim-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .sim-grid input {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+    }
+    .sim-grid input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .sim-actions {
+      padding: 0 16px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .form-msg { font-size: 13px; }
+    .form-msg.ok { color: var(--accent); }
+    .form-msg.err { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>ChillSense</div>
+    <div class="links">
+      <a href="index.html">Dashboard</a>
+      <a href="map.html">Map</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Dashboard</a> &nbsp;›&nbsp;
+      Shipment <span id="breadcrumb-id">#?</span>
+    </div>
+    <h1>Shipment detail</h1>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- info card -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Overview</div></div>
+      <div id="info-card" class="info-grid">
+        <div>
+          <div class="label">Name</div>
+          <div class="value" id="info-name">-</div>
+        </div>
+        <div>
+          <div class="label">Route</div>
+          <div class="value" id="info-route">-</div>
+        </div>
+        <div>
+          <div class="label">Status</div>
+          <div class="value" id="info-status">-</div>
+        </div>
+        <div>
+          <div class="label">Temp range</div>
+          <div class="value mono" id="info-temp-range">-</div>
+        </div>
+        <div>
+          <div class="label">Created</div>
+          <div class="value mono dim" id="info-created">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- chart -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Temperature over time</div></div>
+      <div class="chart-wrap">
+        <canvas id="temp-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- readings -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Readings</div></div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Temp</th>
+            <th>Humidity</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="readings-tbody">
+          <tr><td colspan="4" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- alerts -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Alerts</div></div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Message</th>
+            <th>Severity</th>
+            <th>Resolved</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="alerts-tbody">
+          <tr><td colspan="6" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- sensor simulator -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Simulate sensor reading</div></div>
+      <div class="sim-grid">
+        <label>Temperature (°C, optional)
+          <input id="sim-temp" type="number" step="0.1" placeholder="e.g. 4.5" />
+        </label>
+        <label>Humidity (%, optional)
+          <input id="sim-humidity" type="number" step="0.1" placeholder="e.g. 60" />
+        </label>
+      </div>
+      <div class="sim-actions">
+        <button class="btn" id="sim-safe" type="button">Send safe reading</button>
+        <button class="btn btn-danger" id="sim-violation" type="button">Send violation reading</button>
+        <button class="btn btn-secondary" id="sim-custom" type="button">Send custom value</button>
+        <span id="sim-msg" class="form-msg"></span>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="./shipment.js"></script>
+</body>
+</html>
