@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: Alert Dispatcher API
+  version: 1.0.0
+  description: Minimal API for listing and updating webhook status.
+servers:
+  - url: /
+paths:
+  /polling-now:
+    get:
+      summary: Trigger one polling cycle (demo only)
+      description: Demo/manual endpoint that fetches unresolved alerts from ChillSense and dispatches webhook deliveries once.
+      responses:
+        '200':
+          description: Polling finished successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Demo polling executed once
+                  summary:
+                    type: object
+                    properties:
+                      fetched_alerts:
+                        type: integer
+                      active_webhooks:
+                        type: integer
+                      created_deliveries:
+                        type: integer
+                      skipped_duplicates:
+                        type: integer
+                    required:
+                      - fetched_alerts
+                      - active_webhooks
+                      - created_deliveries
+                      - skipped_duplicates
+                required:
+                  - message
+                  - summary
+        '502':
+          description: Polling failed while calling upstream services or creating deliveries
+
+  /deliveries:
+    get:
+      summary: List deliveries
+      description: Return all delivery rows in newest-first order.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    alert_id:
+                      type: integer
+                    webhook_id:
+                      type: integer
+                    target_url:
+                      type: string
+                    status:
+                      type: string
+                      enum: [sent, failed]
+                    response_code:
+                      type: integer
+                      nullable: true
+                    error_message:
+                      type: string
+                      nullable: true
+                    attempt_count:
+                      type: integer
+                    created_at:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - alert_id
+                    - webhook_id
+                    - target_url
+                    - status
+                    - response_code
+                    - error_message
+                    - attempt_count
+                    - created_at
+    post:
+      summary: Create delivery
+      description: Create a delivery row if a matching key does not already exist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                alert_id:
+                  type: integer
+                shipment_id:
+                  type: integer
+                  nullable: true
+                webhook_id:
+                  type: integer
+                target_url:
+                  type: string
+                status:
+                  type: string
+                  enum: [sent, failed]
+                response_code:
+                  type: integer
+                  nullable: true
+                error_message:
+                  type: string
+                  nullable: true
+                attempt_count:
+                  type: integer
+                  minimum: 1
+              required:
+                - alert_id
+                - webhook_id
+                - target_url
+                - status
+              additionalProperties: false
+      responses:
+        '201':
+          description: Delivery created
+          headers:
+            Location:
+              description: URL of the created delivery resource
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  alert_id:
+                    type: integer
+                  shipment_id:
+                    type: integer
+                    nullable: true
+                  webhook_id:
+                    type: integer
+                  target_url:
+                    type: string
+                  status:
+                    type: string
+                    enum: [sent, failed]
+                  response_code:
+                    type: integer
+                    nullable: true
+                  error_message:
+                    type: string
+                    nullable: true
+                  attempt_count:
+                    type: integer
+                  created_at:
+                    type: string
+                    format: date-time
+        '200':
+          description: Duplicate key found; existing delivery returned
+        '400':
+          description: Invalid request body
+        '409':
+          description: Duplicate conflict detected during insert
+        '415':
+          description: Request body is not valid JSON
+
+  /webhooks:
+    get:
+      summary: List webhooks
+      description: Return all seeded webhook rows.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    target_url:
+                      type: string
+                    status:
+                      type: integer
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - name
+                    - target_url
+                    - status
+                    - created_at
+                    - updated_at
+
+  /webhooks/{id}:
+    put:
+      summary: Update webhook status
+      description: Update only the status field of one webhook.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Webhook id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: integer
+                  enum: [0, 1]
+                  description: 0 = active, 1 = inactive
+              required:
+                - status
+              additionalProperties: false
+            examples:
+              activate:
+                value:
+                  status: 0
+              deactivate:
+                value:
+                  status: 1
+      responses:
+        '200':
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  target_url:
+                    type: string
+                  status:
+                    type: integer
+                    enum: [0, 1]
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - name
+                  - target_url
+                  - status
+                  - created_at
+                  - updated_at
+        '400':
+          description: Invalid request body or invalid status value
+        '404':
+          description: Webhook not found

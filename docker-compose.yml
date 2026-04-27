@@ -32,17 +32,52 @@ services:
     depends_on:
       - postgres-db
 
-  mock-sensor:
+  alert-dispatcher:
     build:
-      context: ./mock-service
+      context: ./services/alert_dispatcher
       dockerfile: Dockerfile
+    volumes:
+      - ./services/alert_dispatcher:/app/services/alert_dispatcher
     restart: unless-stopped
     environment:
-      - MOCK_API_HOST=http://api:5000
-      - MOCK_SHIPMENT_ID=1
-      - MOCK_INTERVAL_SECONDS=18
-      - MOCK_ALERT_EVERY=3
-      - MOCK_MAX_RETRIES=4
-      - MOCK_BACKOFF_SECONDS=1
+      - FLASK_DEBUG=1
+      - FLASK_APP=services.alert_dispatcher:create_app
+      - CHILLSENSE_BASE_URL=http://api:5000
+      - ALERT_DISPATCHER_BASE_URL=http://alert-dispatcher:5002
+      - REQUEST_TIMEOUT_SECONDS=5
+      - POLL_INTERVAL_SECONDS=600
+    command: >
+      sh -c "python3 -m services.alert_dispatcher.init_db &&
+      python3 -m services.alert_dispatcher.poller &
+      flask --app services.alert_dispatcher:create_app run --host=0.0.0.0 --port=5002"
+    ports:
+      - "5002:5002"
     depends_on:
       - api
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5002/health', timeout=2)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # mock-sensor:
+  #   build:
+  #     context: ./services/mock_sensor
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   environment:
+  #     - MOCK_API_HOST=http://api:5000
+  #     - MOCK_SHIPMENT_ID=1
+  #     - MOCK_INTERVAL_SECONDS=18
+  #     - MOCK_ALERT_EVERY=3
+  #     - MOCK_MAX_RETRIES=4
+  #     - MOCK_BACKOFF_SECONDS=1
+  #   depends_on:
+  #     - api

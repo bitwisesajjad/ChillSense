@@ -1,0 +1,6 @@
+Flask
+Flask-RESTful
+Flask-SQLAlchemy
+SQLAlchemy
+flask-swagger-ui
+requests

@@ -11,46 +11,43 @@
 
 ## How to use
 
-### 1. How to use automatically
+### 1. Run with Docker Compose (recommended)
+
+#### 1.1. Development mode (`docker-compose.yml`)
 
 ```bash
-# Development mode (Flask dev server, hot-reload with bind mount)
-
 docker compose down -v --remove-orphans
 docker compose build --no-cache
-docker compose up # http://localhost:5001/
-# Swagger UI: http://localhost:5001/apidocs/
-
-# The `mock-sensor` service is included in docker-compose and sends
-# periodic fake readings to /api/shipments/1/readings.
-# It intentionally sends out-of-range temperatures every few cycles
-# to trigger alerts for demonstration.
-
-# Production-like mode (NGINX + Gunicorn)
-docker compose -f docker-compose.prod.yml up --build # http://localhost:5001/ (served by NGINX, proxied to Gunicorn)
+docker compose up
 ```
 
-#### 1.1. Mock sensor service configuration
+Entrypoints in development mode:
 
-The service lives in `mock-service/sender.py` and uses `requests.Session()`
-with automatic retry + session reset for transient network/session failures.
+- Main API: `http://localhost:5001/api/shipments`
+- Main API Swagger: `http://localhost:5001/apidocs/`
+- Alert-dispatcher API (direct): `http://localhost:5002/webhooks`
+- Alert-dispatcher Swagger (direct, only when debug mode is enabled): `http://localhost:5002/apidocs/`
 
-You can tune behavior in `docker-compose.yml` via environment variables:
+#### 1.2. Production-like mode (`docker-compose.prod.yml`)
 
-- `MOCK_SHIPMENT_ID` (default `1`)
-- `MOCK_INTERVAL_SECONDS` (default `8`)
-- `MOCK_ALERT_EVERY` (default `6`)
-- `MOCK_MAX_RETRIES` (default `4`)
-- `MOCK_BACKOFF_SECONDS` (default `1`)
+```bash
+docker compose -f docker-compose.prod.yml down -v --remove-orphans
+docker compose -f docker-compose.prod.yml up --build
+```
 
-#### 1.2. Why two Docker modes?
+Entrypoints in production-like mode (served by NGINX):
+
+- Main API: `http://localhost:5001/api/shipments`
+- Alert-dispatcher trigger endpoint via NGINX: `http://localhost:5001/dispatcher/polling-now`
+
+#### 1.3. Why two Docker modes?
 
 - Development mode keeps fast iteration and current workflow (live code updates, debug enabled).
 - Production mode uses a proper web-server/app-server chain:
   - NGINX handles public HTTP traffic and reverse-proxy routing.
   - Gunicorn runs the Flask WSGI app with worker processes.
 
-#### 1.3. Monitor and control checks (production mode)
+#### 1.4. Monitor and control checks
 
 Use these commands after starting production mode:
 
@@ -65,6 +62,40 @@ Notes:
 - `ps` shows service state and health status.
 - `logs -f api` follows Gunicorn/API logs in real time.
 - `docker inspect` confirms health state (`starting`, `healthy`, or `unhealthy`) for each container.
+
+#### 1.5. Auxiliary service justification (Alert Dispatcher)
+
+- We implemented `services/alert_dispatcher` as a separate auxiliary service.
+- It polls unresolved alerts from ChillSense API and dispatches them to configured webhooks.
+- This is intentionally outside the main API server to avoid mixing core REST operations with long-running background jobs.
+
+Why not do this directly inside ChillSense API:
+- Webhook delivery depends on external networks and can be slow/fail intermittently.
+- Running dispatch logic inside request-response endpoints can increase latency and reduce API reliability.
+- A separate service provides cleaner isolation, independent restart behavior, and independent delivery audit storage.
+
+Demo note:
+- Alert-dispatcher also exposes `GET /polling-now` (direct on port `5002`) and `GET /dispatcher/polling-now` (via NGINX on port `5001`) for demo/manual trigger only.
+- It executes one immediate poll cycle and is not intended to replace the background poll loop scheduler.
+
+Full auxiliary service instructions are documented in [ALERT_DISPATCHER_README.md](ALERT_DISPATCHER_README.md).
+
+#### 1.6. Mock sensor service configuration
+
+Mock sensor source code is in `services/mock_sensor/sender.py`.
+
+You can tune behavior via environment variables:
+
+- `MOCK_SHIPMENT_ID` (default `1`)
+- `MOCK_INTERVAL_SECONDS` (default `8`)
+- `MOCK_ALERT_EVERY` (default `6`)
+- `MOCK_MAX_RETRIES` (default `4`)
+- `MOCK_BACKOFF_SECONDS` (default `1`)
+
+Current status in this repository:
+
+- The `mock-sensor` service block is currently commented out in `docker-compose.yml`.
+- If you want to demo with automatic fake readings, uncomment the `mock-sensor` service block and run `docker compose up --build` again.
 
 ### 2. How to create and populate the database
 
@@ -137,6 +168,21 @@ PYTHONPATH=. pytest -q
 
 # To see the details of test coverage run:
 pytest --cov=src --cov-report=term-missing # Output expected as an example: TOTAL 290 19 98%
+```
+
+Alert-dispatcher tests (from repository root):
+
+```bash
+pytest -q tests/services/alert_dispatcher
+
+# Run by feature area
+pytest -q tests/services/alert_dispatcher/test_webhooks.py
+pytest -q tests/services/alert_dispatcher/test_deliveries.py
+pytest -q tests/services/alert_dispatcher/test_polling_now.py
+pytest -q tests/services/alert_dispatcher/poller
+
+# Optional coverage for auxiliary service
+pytest --cov=services.alert_dispatcher --cov-report=term-missing tests/services/alert_dispatcher -q
 ```
 
 # if import makes trouble:
@@ -287,6 +333,46 @@ PYTHONPATH=. pytest --cov=src --cov-report=term
 
 - Coverage of application code (`src`)
 - Total coverage ≥ 96% for full points
+
+---
+
+### ix. End-to-end Alert Dispatcher Demo (manual)
+
+This demo shows that creating an out-of-range reading can trigger an alert and then produce a delivery log entry through alert-dispatcher.
+
+1) Start stack (dev or prod):
+
+```bash
+docker compose up --build
+# or
+docker compose -f docker-compose.prod.yml up --build
+```
+
+2) Create an out-of-range reading to trigger an alert:
+
+```bash
+curl -i -X POST http://localhost:5001/api/shipments/1/readings \
+  -H "Content-Type: application/json" \
+  -d '{"temp":999,"humidity":40}'
+```
+
+3) Trigger one immediate polling cycle (recommended because current compose files set `POLL_INTERVAL_SECONDS=600`):
+
+```bash
+# Development route (direct to alert-dispatcher)
+curl -i http://localhost:5002/polling-now
+
+# Production route (through nginx)
+curl -i http://localhost:5001/dispatcher/polling-now
+```
+
+4) Verify delivery logs were updated:
+
+```bash
+curl -s http://localhost:5002/deliveries | python3 -m json.tool
+```
+
+If you prefer not to call `polling-now`, wait for the configured polling interval and then check deliveries again.
 
 ---
 

@@ -30,17 +30,24 @@ jobs:
 
       - name: Run PyLint (min score 9/10)
         run: |
-          pylint src --fail-under=9.0
+          pylint src services/alert_dispatcher --fail-under=9.0
 
       - name: Run tests with coverage (min 96% for src)
         run: |
-          pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=96 | tee coverage.txt
+          set -o pipefail
+          pytest --cov=src --cov-report=term-missing --cov-report=xml:coverage-src.xml --cov-fail-under=96 | tee coverage-src.txt
+
+      - name: Run tests with coverage (min 96% for services/alert_dispatcher)
+        run: |
+          set -o pipefail
+          pytest --cov=services/alert_dispatcher --cov-report=term-missing --cov-report=xml:coverage-alert-dispatcher.xml --cov-fail-under=96 | tee coverage-alert-dispatcher.txt
 
       - name: Comment coverage on PR (only on failure)
         if: failure()
         uses: actions/github-script@v7
         env:
-          COVERAGE_FILE: coverage.txt
+          COVERAGE_SRC_FILE: coverage-src.txt
+          COVERAGE_ALERT_DISPATCHER_FILE: coverage-alert-dispatcher.txt
         with:
           script: |
             const fs = require('fs');
@@ -48,12 +55,17 @@ jobs:
             let body;
 
             try {
-              const content = fs.readFileSync(process.env.COVERAGE_FILE, 'utf8');
-              const match = content.match(/TOTAL\s+\d+\s+\d+\s+(\d+%)/);
-              const coverage = match ? match[1] : 'N/A';
-              body = `${marker}\n## Test Coverage\n- Coverage (src): **${coverage}**\n- Required: **>= 96%**`;
+              const srcContent = fs.readFileSync(process.env.COVERAGE_SRC_FILE, 'utf8');
+              const srcMatch = srcContent.match(/TOTAL\s+\d+\s+\d+\s+(\d+%)/);
+              const srcCoverage = srcMatch ? srcMatch[1] : 'N/A';
+
+              const alertDispatcherContent = fs.readFileSync(process.env.COVERAGE_ALERT_DISPATCHER_FILE, 'utf8');
+              const alertDispatcherMatch = alertDispatcherContent.match(/TOTAL\s+\d+\s+\d+\s+(\d+%)/);
+              const alertDispatcherCoverage = alertDispatcherMatch ? alertDispatcherMatch[1] : 'N/A';
+
+              body = `${marker}\n## Test Coverage\n- Coverage (src): **${srcCoverage}**\n- Coverage (services/alert_dispatcher): **${alertDispatcherCoverage}**\n- Required: **>= 96%** for each scope`;
             } catch (error) {
-              body = `${marker}\n## Test Coverage\nKhong doc duoc file coverage.txt de tao bao cao coverage.`;
+              body = `${marker}\n## Test Coverage\nUnable to read the coverage report file to generate a coverage report.`;
             }
 
             const { owner, repo } = context.repo;
