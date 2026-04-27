@@ -50,6 +50,23 @@ export function unresolvedCount(alerts) {
   return alerts.filter(a => !a.is_resolved).length;
 }
 
+// Bearing from point a to point b, in degrees clockwise from north.
+// Used to rotate the arrowhead so it points along the route.
+export function bearingDegrees(a, b) {
+  const toRad = d => (d * Math.PI) / 180;
+  const toDeg = r => (r * 180) / Math.PI;
+
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const dLng = toRad(b[1] - a[1]);
+
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) -
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
 export function latestReadingTemp(readings) {
   if (!readings || readings.length === 0) return null;
   // string sort by ts works because the API uses "YYYY-MM-DD HH:MM:SS"
@@ -102,6 +119,7 @@ export function buildRoute(shipment, alerts, readings) {
     color,
     popupHtml,
     shipmentId: shipment.id,
+    bearing: bearingDegrees(a, b),
   };
 }
 
@@ -165,17 +183,40 @@ async function loadMap() {
     }).addTo(map);
     line.bindPopup(route.popupHtml);
 
-    // circle markers at both ends, same color as the line
-    for (const pt of route.coords) {
-      window.L.circleMarker(pt, {
-        radius: 6,
-        color: route.color,
-        fillColor: route.color,
-        fillOpacity: 1,
-        weight: 2,
-      }).addTo(map).bindPopup(route.popupHtml);
-      allLatLngs.push(pt);
-    }
+    // origin gets a circle marker, destination gets an arrowhead so the
+    // direction of travel is obvious at a glance
+    const [origin, destination] = route.coords;
+
+    window.L.circleMarker(origin, {
+      radius: 6,
+      color: route.color,
+      fillColor: route.color,
+      fillOpacity: 1,
+      weight: 2,
+    }).addTo(map).bindPopup(route.popupHtml);
+
+    // SVG triangle inside a divIcon, rotated to follow the route bearing.
+    // The triangle's tip points up by default, so we rotate by (bearing - 0)
+    // since Leaflet's bearing convention matches "0 = north = up on screen".
+    const arrowSvg = `
+      <svg viewBox="0 0 20 20" width="20" height="20"
+           style="transform: rotate(${route.bearing}deg); transform-origin: 50% 50%;">
+        <polygon points="10,1 18,18 10,14 2,18"
+                 fill="${route.color}" stroke="${route.color}" stroke-width="1"
+                 stroke-linejoin="round"/>
+      </svg>
+    `;
+    const arrowIcon = window.L.divIcon({
+      className: 'route-arrow',
+      html: arrowSvg,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+    window.L.marker(destination, { icon: arrowIcon })
+      .addTo(map)
+      .bindPopup(route.popupHtml);
+
+    allLatLngs.push(origin, destination);
   }
 
   // fit bounds so the user sees all routes at once
