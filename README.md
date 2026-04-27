@@ -27,6 +27,7 @@ Entrypoints in development mode:
 - Main API Swagger: `http://localhost:5001/apidocs/`
 - Alert-dispatcher API (direct): `http://localhost:5002/webhooks`
 - Alert-dispatcher Swagger (direct, only when debug mode is enabled): `http://localhost:5002/apidocs/`
+- Client UI (static server): `http://localhost:5003/`
 
 #### 1.2. Production-like mode (`docker-compose.prod.yml`)
 
@@ -39,6 +40,7 @@ Entrypoints in production-like mode (served by NGINX):
 
 - Main API: `http://localhost:5001/api/shipments`
 - Alert-dispatcher trigger endpoint via NGINX: `http://localhost:5001/dispatcher/polling-now`
+- Client UI: `http://localhost:5001/`
 
 #### 1.3. Why two Docker modes?
 

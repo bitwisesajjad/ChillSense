@@ -2,9 +2,16 @@
 // All three pages (index.html, map.html, shipment.html) import from here.
 //
 // To point the client at a different backend, change BASE_URL below.
-// Local dev:    http://localhost:5001/api
-// Cloud VM:     http://34.88.97.198:5001/api
-export const BASE_URL = 'http://localhost:5001/api';
+// Default: same-origin /api (works behind NGINX in dev/prod).
+export const BASE_URL = (() => {
+  if (typeof window === 'undefined') return 'http://localhost:5001/api';
+
+  // If the client is served from the API gateway (prod NGINX), use same-origin.
+  // If running the dev static server on a different port, fallback to 5001.
+  const port = window.location.port || '80';
+  if (port === '5001' || port === '80') return `${window.location.origin}/api`;
+  return 'http://localhost:5001/api';
+})();
 
 // Internal helper. Every public function goes through this so we have one
 // place handling response parsing and error throwing.
