@@ -179,7 +179,7 @@ export function renderAlertsTable(tbody, alerts, onResolve) {
     const actTd = document.createElement('td');
     if (!a.is_resolved) {
       const btn = document.createElement('button');
-      btn.className = 'btn btn-secondary resolve-btn';
+      btn.className = 'btn btn-danger resolve-btn';
       btn.type = 'button';
       btn.textContent = 'Resolve';
       btn.addEventListener('click', () => onResolve(a.id));
