@@ -149,6 +149,16 @@ black db_init.py # To fix auto
 # ruff check db_init.py --fix
 ```
 
+c. Front-end lint / format (optional)
+
+```bash
+cd client
+npm install
+npm run lint
+npm run format:check
+npm run format
+```
+
 ### 4. How to run tests
 
 The project includes a functional testing script that we have implemented using **pytest**.
