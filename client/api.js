@@ -77,9 +77,7 @@ export function getAlerts(shipmentId) {
 }
 
 export function resolveAlert(shipmentId, alertId) {
-  return jsonRequest(
-    `/shipments/${shipmentId}/alerts/${alertId}`,
-    'PUT',
-    { is_resolved: true },
-  );
+  return jsonRequest(`/shipments/${shipmentId}/alerts/${alertId}`, 'PUT', {
+    is_resolved: true,
+  });
 }

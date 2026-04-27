@@ -5,12 +5,18 @@
 // Pure helpers and render functions are exported so tests/test_shipment.html
 // can exercise them without a real API or a real Chart.js instance.
 
-import { getShipment, getReadings, getAlerts, createReading, resolveAlert } from './api.js';
+import {
+  getShipment,
+  getReadings,
+  getAlerts,
+  createReading,
+  resolveAlert,
+} from './api.js';
 
 const ALERT_COLOR = '#ee0000';
 const NORMAL_COLOR = '#009966';
 
-//  pure helpers 
+//  pure helpers
 
 export function getShipmentIdFromUrl(search) {
   const params = new URLSearchParams(search || '');
@@ -32,7 +38,8 @@ export function buildChartData(readings, shipment) {
   const labels = sorted.map(r => r.ts);
   const temps = sorted.map(r => r.temp);
   const pointColors = sorted.map(r => {
-    const out = r.temp < shipment.min_temperature || r.temp > shipment.max_temperature;
+    const out =
+      r.temp < shipment.min_temperature || r.temp > shipment.max_temperature;
     return out ? ALERT_COLOR : NORMAL_COLOR;
   });
 
@@ -77,17 +84,19 @@ export function formatTimestamp(ts) {
   return String(ts);
 }
 
-//  DOM rendering 
+//  DOM rendering
 
 export function renderShipmentInfo(container, shipment) {
   container.querySelector('#info-name').textContent = shipment.name;
   container.querySelector('#info-route').textContent =
     `${shipment.origin} → ${shipment.destination}`;
-  container.querySelector('#info-status').textContent = shipment.status || 'unknown';
+  container.querySelector('#info-status').textContent =
+    shipment.status || 'unknown';
   container.querySelector('#info-temp-range').textContent =
     `${shipment.min_temperature} / ${shipment.max_temperature} °C`;
-  container.querySelector('#info-created').textContent =
-    formatTimestamp(shipment.created_at);
+  container.querySelector('#info-created').textContent = formatTimestamp(
+    shipment.created_at
+  );
 }
 
 export function renderReadingsTable(tbody, readings) {
@@ -191,13 +200,14 @@ export function renderAlertsTable(tbody, alerts, onResolve) {
   }
 }
 
-//  chart wiring (only runs in the browser) 
+//  chart wiring (only runs in the browser)
 
 let chartInstance = null;
 
 function renderChart(canvas, chartData) {
   // Chart.js is loaded globally via the script tag in shipment.html
-  if (typeof window === 'undefined' || typeof window.Chart === 'undefined') return;
+  if (typeof window === 'undefined' || typeof window.Chart === 'undefined')
+    return;
 
   if (chartInstance) {
     chartInstance.destroy();
@@ -257,7 +267,7 @@ function renderChart(canvas, chartData) {
   });
 }
 
-//  page bootstrap 
+//  page bootstrap
 
 let currentShipment = null;
 
@@ -284,12 +294,16 @@ async function loadDetail(shipmentId) {
   renderShipmentInfo(document.getElementById('info-card'), shipment);
   renderReadingsTable(document.getElementById('readings-tbody'), readings);
 
-  const onResolve = async (alertId) => {
+  const onResolve = async alertId => {
     try {
       await resolveAlert(shipment.id, alertId);
       // re-fetch and re-render alerts
       const fresh = await getAlerts(shipment.id);
-      renderAlertsTable(document.getElementById('alerts-tbody'), fresh, onResolve);
+      renderAlertsTable(
+        document.getElementById('alerts-tbody'),
+        fresh,
+        onResolve
+      );
     } catch (err) {
       const simMsg = document.getElementById('sim-msg');
       simMsg.textContent = `Failed to resolve alert: ${err.message}`;
@@ -319,7 +333,8 @@ function wireSimulator() {
     simMsg.className = 'form-msg';
 
     const payload = { temp };
-    if (humidity != null && !Number.isNaN(humidity)) payload.humidity = humidity;
+    if (humidity != null && !Number.isNaN(humidity))
+      payload.humidity = humidity;
 
     try {
       const result = await createReading(currentShipment.id, payload);
@@ -359,7 +374,10 @@ function wireSimulator() {
 }
 
 // only run page logic when we're on shipment.html
-if (typeof document !== 'undefined' && document.getElementById('readings-tbody')) {
+if (
+  typeof document !== 'undefined' &&
+  document.getElementById('readings-tbody')
+) {
   const id = getShipmentIdFromUrl(window.location.search);
   if (id == null) {
     const err = document.getElementById('error-banner');
