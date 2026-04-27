@@ -15,4 +15,4 @@ csc-venv/
 *draft*
 
 *node_modules*
-*package-lock.json
+# *package-lock.json
