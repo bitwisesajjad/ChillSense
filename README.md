@@ -78,7 +78,9 @@ Demo note:
 - Alert-dispatcher also exposes `GET /polling-now` (direct on port `5002`) and `GET /dispatcher/polling-now` (via NGINX on port `5001`) for demo/manual trigger only.
 - It executes one immediate poll cycle and is not intended to replace the background poll loop scheduler.
 
-Full auxiliary service instructions are documented in [ALERT_DISPATCHER_README.md](ALERT_DISPATCHER_README.md).
+Alert-dispatcher documentation is split into two mandatory files:
+- Architecture + justification overview: [ALERT_DISPATCHER_README.md](ALERT_DISPATCHER_README.md)
+- Run/setup/test/demo operations guide: [ALERT_DISPATCHER_OPERATIONS.md](ALERT_DISPATCHER_OPERATIONS.md)
 
 #### 1.6. Mock sensor service configuration
 
