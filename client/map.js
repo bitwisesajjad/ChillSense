@@ -15,26 +15,26 @@ const SAFE_COLOR = '#009966';
 // too. Coords are roughly the city center.
 export const CITY_COORDS = {
   // Finland
-  'Oulu':       [65.0121, 25.4651],
-  'Helsinki':   [60.1699, 24.9384],
-  'Tampere':    [61.4978, 23.7610],
-  'Turku':      [60.4518, 22.2666],
-  'Jyväskylä':  [62.2426, 25.7473],
-  'Rovaniemi':  [66.5039, 25.7294],
-  'Kuopio':     [62.8980, 27.6782],
-  'Lahti':      [60.9827, 25.6612],
+  Oulu: [65.0121, 25.4651],
+  Helsinki: [60.1699, 24.9384],
+  Tampere: [61.4978, 23.761],
+  Turku: [60.4518, 22.2666],
+  Jyväskylä: [62.2426, 25.7473],
+  Rovaniemi: [66.5039, 25.7294],
+  Kuopio: [62.898, 27.6782],
+  Lahti: [60.9827, 25.6612],
   // Europe (matches db_init.py seed)
-  'Berlin':     [52.5200, 13.4050],
-  'Munich':     [48.1351, 11.5820],
-  'Oslo':       [59.9139, 10.7522],
-  'Hamburg':    [53.5511,  9.9937],
-  'Rotterdam':  [51.9244,  4.4777],
-  'Amsterdam':  [52.3676,  4.9041],
+  Berlin: [52.52, 13.405],
+  Munich: [48.1351, 11.582],
+  Oslo: [59.9139, 10.7522],
+  Hamburg: [53.5511, 9.9937],
+  Rotterdam: [51.9244, 4.4777],
+  Amsterdam: [52.3676, 4.9041],
   // South America (Chiquita route)
-  'Quito':      [-0.1807, -78.4678],
+  Quito: [-0.1807, -78.4678],
 };
 
-//  pure helpers 
+//  pure helpers
 
 export function getCoords(city) {
   if (!city) return null;
@@ -61,8 +61,9 @@ export function bearingDegrees(a, b) {
   const dLng = toRad(b[1] - a[1]);
 
   const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) -
-            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
 
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
@@ -123,7 +124,7 @@ export function buildRoute(shipment, alerts, readings) {
   };
 }
 
-//  Leaflet bootstrap (only runs in the browser) 
+//  Leaflet bootstrap (only runs in the browser)
 
 async function loadMap() {
   const errorEl = document.getElementById('error-banner');
@@ -151,16 +152,27 @@ async function loadMap() {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
         '&copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 19,
-    },
+    }
   ).addTo(map);
 
   // pull alerts + readings for each shipment in parallel
-  const drawables = await Promise.all(shipments.map(async (s) => {
-    let alerts = [], readings = [];
-    try { alerts = await getAlerts(s.id); } catch { /* skip */ }
-    try { readings = await getReadings(s.id); } catch { /* skip */ }
-    return { shipment: s, alerts, readings };
-  }));
+  const drawables = await Promise.all(
+    shipments.map(async s => {
+      let alerts = [],
+        readings = [];
+      try {
+        alerts = await getAlerts(s.id);
+      } catch {
+        /* skip */
+      }
+      try {
+        readings = await getReadings(s.id);
+      } catch {
+        /* skip */
+      }
+      return { shipment: s, alerts, readings };
+    })
+  );
 
   const skipped = [];
   const allLatLngs = [];
@@ -171,7 +183,7 @@ async function loadMap() {
       skipped.push(`${d.shipment.origin} → ${d.shipment.destination}`);
       console.warn(
         `Skipping shipment ${d.shipment.id} (${d.shipment.name}): ` +
-        `unknown city in route ${d.shipment.origin} → ${d.shipment.destination}`,
+          `unknown city in route ${d.shipment.origin} → ${d.shipment.destination}`
       );
       continue;
     }
@@ -193,7 +205,9 @@ async function loadMap() {
       fillColor: route.color,
       fillOpacity: 1,
       weight: 2,
-    }).addTo(map).bindPopup(route.popupHtml);
+    })
+      .addTo(map)
+      .bindPopup(route.popupHtml);
 
     // SVG triangle inside a divIcon, rotated to follow the route bearing.
     // The triangle's tip points up by default, so we rotate by (bearing - 0)
@@ -227,8 +241,7 @@ async function loadMap() {
   // update the skipped notice if any
   const skippedEl = document.getElementById('skipped-notice');
   if (skippedEl && skipped.length > 0) {
-    skippedEl.textContent =
-      `${skipped.length} route(s) skipped (unknown city): ${skipped.join(', ')}`;
+    skippedEl.textContent = `${skipped.length} route(s) skipped (unknown city): ${skipped.join(', ')}`;
     skippedEl.style.display = 'block';
   }
 }

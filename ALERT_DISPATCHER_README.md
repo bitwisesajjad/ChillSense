@@ -1,171 +1,175 @@
 # Alert Dispatcher Service (Auxiliary)
 
-This service is separated from the main ChillSense API and is responsible for polling unresolved alerts and writing delivery logs.
+Alert Dispatcher is a separate auxiliary service for ChillSense.
+Its job is to read unresolved alerts from the main API and create delivery logs for webhook notifications.
 
 Main project guide: [README.md](README.md)
 
-## Why this service exists
+## 1. Required justification: why this auxiliary service exists
 
-- Keeps shipment/reading API endpoints focused and responsive.
-- Isolates polling and delivery responsibilities from request-response paths.
-- Stores webhook and delivery audit data in a dedicated SQLite database.
+### 1.1. What this service does (approximation accepted by course requirement)
 
-## Service responsibilities
+- It polls unresolved alerts from ChillSense API.
+- It processes notification dispatch flow per active webhook.
+- It records delivery attempts as operational logs.
+- In this project stage, webhook sending is intentionally mocked (`FAKE SEND`).
+- This is still valid because the required part is the interaction and service separation.
 
-- Manage webhooks (`GET /webhooks`, `PUT /webhooks/<id>`)
-- Store delivery records (`GET /deliveries`, `POST /deliveries`)
-- Poll unresolved alerts and create delivery attempts
-- Provide demo/manual trigger endpoint (`GET /polling-now`)
+### 1.2. Why this service is necessary
 
-## Run with Docker Compose
+- Polling and dispatch are ongoing operational tasks, not normal CRUD endpoints.
+- Keeping this logic outside the main API helps shipments/readings endpoints stay focused and responsive.
+- Dispatcher can be started, restarted, and monitored independently from ChillSense API.
+- Webhook configuration and delivery audit logs are cleaner when stored in a dedicated service boundary.
 
-### 1. Development mode (`docker-compose.yml`)
+### 1.3. Why implementing directly in ChillSense API is problematic
 
-```bash
-docker compose down -v --remove-orphans
-docker compose up --build
+- Delivery depends on external networks and can be slow, unstable, or temporarily down.
+- If delivery logic runs directly in API request paths, user-facing requests can become slower and less reliable.
+- Retry/polling behavior can keep API worker processes busy with background concerns.
+- Error isolation is weaker: failures in notification flow can affect API runtime behavior.
+
+## 2. Overview in the ecosystem (clear relation to other components)
+
+This is the role of each component:
+
+- ChillSense API (`src/`): source of business data (shipments, readings, alerts).
+- Alert Dispatcher (`services/alert_dispatcher/`): background-style worker + API for webhook and delivery logs.
+- PostgreSQL: main data for ChillSense API.
+- SQLite (`services/alert_dispatcher/alert_dispatcher.db`): local operational data for dispatcher (webhooks and deliveries).
+- NGINX (production-like mode): public entry point that routes traffic to both services.
+
+In short:
+
+- ChillSense API is responsible for creating alerts.
+- Alert Dispatcher is responsible for consuming unresolved alerts and recording notification delivery attempts.
+
+## 3. How the interaction works (end-to-end)
+
+1. A new reading is posted to ChillSense API.
+2. If temperature is out of range, ChillSense API creates an alert.
+3. Alert Dispatcher poller calls `GET /api/alerts` on ChillSense API.
+4. It filters unresolved alerts (`is_resolved=false`).
+5. For each active webhook, it records one delivery attempt via `POST /deliveries`.
+6. Delivery history is visible at `GET /deliveries`.
+
+Current implementation note:
+
+- `send_webhook()` is intentionally mocked (`FAKE SEND`) at this stage.
+- This is acceptable for the course goal because the required part is the service interaction and separation of responsibilities.
+
+## 4. Service responsibilities
+
+- Manage webhooks (`GET /webhooks`, `PUT /webhooks/<id>`).
+- Store delivery records (`GET /deliveries`, `POST /deliveries`).
+- Poll unresolved alerts from ChillSense API and create delivery attempts.
+- Provide demo/manual trigger endpoint (`GET /polling-now`).
+
+## 5. Architecture diagrams (services, protocols, interaction)
+
+The diagrams below show how services are connected and which communication protocol is used.
+
+### 5.1. Component diagram
+
+```mermaid
+flowchart TB
+    user[User or Tester]
+
+    subgraph edge[Edge layer]
+        nginx[NGINX reverse proxy :5001]
+    end
+
+    subgraph app[Application layer]
+        direction LR
+        dispatcher[Alert Dispatcher service]
+        api[ChillSense API service]
+        poller[Dispatcher poller loop]
+    end
+
+    subgraph data[Data layer]
+        pg[(PostgreSQL coldchain)]
+        sqlite[(SQLite alert_dispatcher.db)]
+    end
+
+    user -->|HTTP| nginx
+    nginx -->|HTTP /api/*| api
+    nginx -->|HTTP /dispatcher/*| dispatcher
+
+    user -->|HTTP direct in dev :5002| dispatcher
+    poller -->|internal call poll_and_dispatch_alerts| dispatcher
+    dispatcher -->|HTTP GET /api/alerts| api
+    dispatcher -->|HTTP POST /deliveries| dispatcher
+
+    api -->|SQL| pg
+    dispatcher -->|SQLite file I/O| sqlite
 ```
 
-Useful endpoints in development:
+### 5.2. Sequence diagram
 
-- Alert-dispatcher direct API: `http://localhost:5002/webhooks`
-- Deliveries list: `http://localhost:5002/deliveries`
-- One-shot polling: `http://localhost:5002/polling-now`
-- Swagger UI (only if debug mode is enabled): `http://localhost:5002/apidocs/`
+```mermaid
+sequenceDiagram
+    actor User
+    participant N as NGINX
+    participant A as ChillSense API service
+    participant PG as PostgreSQL
+    participant D as Alert Dispatcher API
+    participant P as Poller logic
+    participant S as SQLite
 
-### 2. Production-like mode (`docker-compose.prod.yml`)
+    User->>N: GET /dispatcher/polling-now
+    N->>D: forward request
+    D->>P: poll_and_dispatch_alerts()
 
-```bash
-docker compose -f docker-compose.prod.yml down -v --remove-orphans
-docker compose -f docker-compose.prod.yml up --build
+    P->>A: GET /api/alerts
+    A->>PG: SELECT alerts
+    PG-->>A: result rows
+    A-->>P: alerts JSON
+
+    loop each unresolved alert x active webhook
+        P->>D: POST /deliveries
+        D->>S: INSERT delivery
+        S-->>D: created or duplicate
+        D-->>P: 201 Created or 200 OK
+    end
+
+    P-->>D: summary
+    D-->>N: 200 response
+    N-->>User: 200 + summary
 ```
 
-In production-like mode, use NGINX route for one-shot polling:
+Deployment notes:
 
-- `http://localhost:5001/dispatcher/polling-now`
+- In production-like mode, public traffic enters through NGINX.
+- In development mode, alert-dispatcher can also be called directly on port `5002`.
 
-## How service data is created (Webhook + Delivery)
+## 6. Operational guide
 
-Alert-dispatcher uses SQLite at `services/alert_dispatcher/alert_dispatcher.db`.
+This operational guide is mandatory documentation for this auxiliary service.
 
-When running with Docker Compose, data initialization is automatic when the `alert-dispatcher` container starts (for example after `docker compose up` or container recreate):
+- Run/setup/test/demo instructions: [ALERT_DISPATCHER_OPERATIONS.md](ALERT_DISPATCHER_OPERATIONS.md)
 
-- `python3 -m services.alert_dispatcher.init_db`
+## 7. Documentation format used for public API/functions
 
-This creates tables and seeds initial webhook rows.
+To satisfy the "method documentation" requirement in a service-oriented project, this auxiliary service documents public HTTP methods using OpenAPI/Swagger and documents internal callable functions with Python docstrings.
 
-Seeded webhooks:
+- OpenAPI source: `services/alert_dispatcher/openapi.yaml`
+- Swagger UI source loading: configured in `services/alert_dispatcher/__init__.py` and exposed at `/apidocs/` when debug mode is enabled.
+- HTTP resources implementation: `services/alert_dispatcher/resources/`
 
-- `telegram` (status `0`, active)
-- `email` (status `1`, inactive)
+What is documented in OpenAPI for each public endpoint:
 
-Manual re-seed (optional, only when you want to run init again explicitly):
+- Short description/purpose (`summary` + `description`).
+- Input parameters (`path` params and `requestBody` schema, including allowed values).
+- Output (`200/201` response schema and payload shape).
+- Exception/error behavior (`400/404/409/415/502` response cases).
 
-```bash
-docker compose exec alert-dispatcher python3 -m services.alert_dispatcher.init_db
-```
+Internal public function documentation locations:
 
-Or locally from repo root:
+- Poll-and-dispatch flow: `services/alert_dispatcher/poller/dispatcher.py`
+- ChillSense API fetcher: `services/alert_dispatcher/poller/chillsense_client.py`
+- Polling runtime loop: `services/alert_dispatcher/poller/runtime.py`
 
-```bash
-source .venv/bin/activate
-python3 -m services.alert_dispatcher.init_db
-```
+Note for reviewers:
 
-Quick verification:
-
-```bash
-curl -s http://localhost:5002/webhooks | python3 -m json.tool
-```
-
-You should see at least the `telegram` and `email` rows.
-
-## End-to-end demo flow (required for presentation)
-
-This flow proves that alert-dispatcher receives an unresolved alert and writes delivery logs.
-
-1. Start one compose stack (dev or prod).
-2. Trigger an out-of-range reading:
-
-```bash
-curl -i -X POST http://localhost:5001/api/shipments/1/readings \
-  -H "Content-Type: application/json" \
-  -d '{"temp":999,"humidity":40}'
-```
-
-3. Trigger one immediate polling cycle (recommended):
-
-```bash
-# Development (direct to alert-dispatcher)
-curl -i http://localhost:5002/polling-now
-
-# Production-like (through nginx)
-curl -i http://localhost:5001/dispatcher/polling-now
-```
-
-4. Verify delivery history is updated:
-
-```bash
-curl -s http://localhost:5002/deliveries | python3 -m json.tool
-```
-
-Expected observation:
-
-- You should see at least one delivery row with the new `alert_id`.
-- This confirms alert-dispatcher executed and delivery logging is working.
-
-Note on polling interval:
-
-- In current compose files, `POLL_INTERVAL_SECONDS=600`.
-- If you do not call `/polling-now`, wait for the next interval before checking `/deliveries`.
-
-## Run tests (pytest)
-
-From repository root:
-
-```bash
-pytest -q tests/services/alert_dispatcher
-```
-
-By module:
-
-```bash
-pytest -q tests/services/alert_dispatcher/test_app_factory.py
-pytest -q tests/services/alert_dispatcher/test_webhooks.py
-pytest -q tests/services/alert_dispatcher/test_deliveries.py
-pytest -q tests/services/alert_dispatcher/test_polling_now.py
-pytest -q tests/services/alert_dispatcher/poller
-```
-
-Coverage focused on auxiliary service:
-
-```bash
-pytest --cov=services.alert_dispatcher --cov-report=term-missing tests/services/alert_dispatcher -q
-```
-
-If import path resolution causes issues:
-
-```bash
-PYTHONPATH=. pytest -q tests/services/alert_dispatcher
-```
-
-## Local run without Docker (optional)
-
-From repository root:
-
-```bash
-source .venv/bin/activate
-export CHILLSENSE_BASE_URL=http://localhost:5000
-export ALERT_DISPATCHER_BASE_URL=http://localhost:5002
-export REQUEST_TIMEOUT_SECONDS=5
-export POLL_INTERVAL_SECONDS=15
-python3 -m services.alert_dispatcher.init_db
-python3 -m services.alert_dispatcher.poller
-```
-
-In another shell:
-
-```bash
-source .venv/bin/activate
-FLASK_DEBUG=1 flask --app services.alert_dispatcher:create_app run --port 5002
-```
+- API-level documentation is normative in `openapi.yaml`.
+- Function-level code documentation is intentionally concise in docstrings, while detailed API I/O/error contracts are maintained in OpenAPI.

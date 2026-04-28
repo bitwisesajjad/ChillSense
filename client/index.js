@@ -6,7 +6,7 @@
 
 import { getShipments, getAlerts, createShipment } from './api.js';
 
-//  pure helpers 
+//  pure helpers
 
 export function statusBadgeClass(status) {
   if (status === 'active') return 'badge-active';
@@ -30,22 +30,27 @@ export function buildSummary(shipments, alertsByShipment) {
 
   // sort by created_at desc so the first one is the most recent
   // string sort works because the API returns "YYYY-MM-DD HH:MM:SS"
-  unresolvedAlerts.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  unresolvedAlerts.sort((a, b) =>
+    (b.created_at || '').localeCompare(a.created_at || '')
+  );
 
   return {
     total,
     active,
     unresolved: unresolvedAlerts.length,
-    latestUnresolvedMsg: unresolvedAlerts.length > 0 ? unresolvedAlerts[0].msg : null,
+    latestUnresolvedMsg:
+      unresolvedAlerts.length > 0 ? unresolvedAlerts[0].msg : null,
   };
 }
 
-//  DOM rendering 
+//  DOM rendering
 
 export function renderSummary(container, stats) {
   container.querySelector('#stat-total').textContent = String(stats.total);
   container.querySelector('#stat-active').textContent = String(stats.active);
-  container.querySelector('#stat-unresolved').textContent = String(stats.unresolved);
+  container.querySelector('#stat-unresolved').textContent = String(
+    stats.unresolved
+  );
   const msgEl = container.querySelector('#stat-msg');
   msgEl.textContent = stats.latestUnresolvedMsg ?? 'No unresolved alerts';
 }
@@ -115,12 +120,21 @@ export function renderTable(tbody, shipments, alertCountsByShipment) {
     viewLink.className = 'action-link';
     actionTd.appendChild(viewLink);
 
-    tr.append(idTd, nameTd, routeTd, statusTd, tempTd, alertTd, createdTd, actionTd);
+    tr.append(
+      idTd,
+      nameTd,
+      routeTd,
+      statusTd,
+      tempTd,
+      alertTd,
+      createdTd,
+      actionTd
+    );
     tbody.appendChild(tr);
   }
 }
 
-//  page bootstrap (only runs in the browser, not under tests) 
+//  page bootstrap (only runs in the browser, not under tests)
 
 async function loadDashboard() {
   const errorEl = document.getElementById('error-banner');
@@ -133,7 +147,8 @@ async function loadDashboard() {
   try {
     shipments = await getShipments();
   } catch (e) {
-    errorEl.textContent = 'Failed to load shipments. Check that the API is running.';
+    errorEl.textContent =
+      'Failed to load shipments. Check that the API is running.';
     errorEl.style.display = 'block';
     return;
   }
@@ -142,16 +157,18 @@ async function loadDashboard() {
   // so the dashboard still renders for the others.
   const alertsByShipment = {};
   const alertCounts = {};
-  await Promise.all(shipments.map(async (s) => {
-    try {
-      const alerts = await getAlerts(s.id);
-      alertsByShipment[s.id] = alerts;
-      alertCounts[s.id] = alerts.filter(a => !a.is_resolved).length;
-    } catch {
-      alertsByShipment[s.id] = [];
-      alertCounts[s.id] = 0;
-    }
-  }));
+  await Promise.all(
+    shipments.map(async s => {
+      try {
+        const alerts = await getAlerts(s.id);
+        alertsByShipment[s.id] = alerts;
+        alertCounts[s.id] = alerts.filter(a => !a.is_resolved).length;
+      } catch {
+        alertsByShipment[s.id] = [];
+        alertCounts[s.id] = 0;
+      }
+    })
+  );
 
   renderSummary(summaryEl, buildSummary(shipments, alertsByShipment));
   renderTable(tbody, shipments, alertCounts);
@@ -169,7 +186,7 @@ function wireForm() {
     toggleBtn.textContent = open ? 'New Shipment' : 'Cancel';
   });
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     formMsg.textContent = '';
     formMsg.className = 'form-msg';
@@ -196,7 +213,6 @@ function wireForm() {
     }
   });
 }
-
 
 if (document.getElementById('shipments-tbody')) {
   wireForm();

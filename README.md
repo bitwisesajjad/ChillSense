@@ -27,6 +27,7 @@ Entrypoints in development mode:
 - Main API Swagger: `http://localhost:5001/apidocs/`
 - Alert-dispatcher API (direct): `http://localhost:5002/webhooks`
 - Alert-dispatcher Swagger (direct, only when debug mode is enabled): `http://localhost:5002/apidocs/`
+- Client UI (static server): `http://localhost:5003/`
 
 #### 1.2. Production-like mode (`docker-compose.prod.yml`)
 
@@ -39,6 +40,7 @@ Entrypoints in production-like mode (served by NGINX):
 
 - Main API: `http://localhost:5001/api/shipments`
 - Alert-dispatcher trigger endpoint via NGINX: `http://localhost:5001/dispatcher/polling-now`
+- Client UI: `http://localhost:5001/`
 
 #### 1.3. Why two Docker modes?
 
@@ -78,7 +80,9 @@ Demo note:
 - Alert-dispatcher also exposes `GET /polling-now` (direct on port `5002`) and `GET /dispatcher/polling-now` (via NGINX on port `5001`) for demo/manual trigger only.
 - It executes one immediate poll cycle and is not intended to replace the background poll loop scheduler.
 
-Full auxiliary service instructions are documented in [ALERT_DISPATCHER_README.md](ALERT_DISPATCHER_README.md).
+Alert-dispatcher documentation is split into two mandatory files:
+- Architecture + justification overview: [ALERT_DISPATCHER_README.md](ALERT_DISPATCHER_README.md)
+- Run/setup/test/demo operations guide: [ALERT_DISPATCHER_OPERATIONS.md](ALERT_DISPATCHER_OPERATIONS.md)
 
 #### 1.6. Mock sensor service configuration
 
@@ -143,6 +147,16 @@ black db_init.py # To fix auto
 
 # ruff check db_init.py
 # ruff check db_init.py --fix
+```
+
+c. Front-end lint / format (optional)
+
+```bash
+cd client
+npm install
+npm run lint
+npm run format:check
+npm run format
 ```
 
 ### 4. How to run tests

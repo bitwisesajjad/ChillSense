@@ -18,6 +18,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Lint client
+        working-directory: client
+        run: npm run lint
+
+      - name: Check client formatting
+        working-directory: client
+        run: npm run format:check
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
