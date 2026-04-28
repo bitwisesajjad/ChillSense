@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>map.js tests</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #eaeaea;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --accent: #009966;
+      --danger: #ee0000;
+      --danger-light: #fff0f0;
+    }
+    body {
+      font-family: 'Geist', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+      max-width: 800px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    h1 { font-weight: 600; }
+    .summary {
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-family: 'Geist Mono', monospace;
+    }
+    .test {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: var(--surface);
+    }
+    .test.pass { border-left: 3px solid var(--accent); }
+    .test.fail { border-left: 3px solid var(--danger); background: var(--danger-light); }
+    .name { font-weight: 500; }
+    .err {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>map.js tests</h1>
+  <div id="summary" class="summary">running...</div>
+  <div id="results"></div>
+
+  <script type="module">
+    import {
+      getCoords,
+      routeColor,
+      buildRoute,
+      buildPopupHtml,
+      latestReadingTemp,
+      unresolvedCount,
+    } from '../map.js';
+
+    const tests = [];
+    function test(name, fn) { tests.push({ name, fn }); }
+    function assert(cond, msg) {
+      if (!cond) throw new Error(msg || 'assertion failed');
+    }
+    function assertEqual(actual, expected, msg) {
+      const a = JSON.stringify(actual);
+      const e = JSON.stringify(expected);
+      if (a !== e) throw new Error((msg || 'not equal') + `\n  expected: ${e}\n  actual:   ${a}`);
+    }
+
+    //  getCoords 
+
+    test('getCoords returns coords for known city', () => {
+      const c = getCoords('Oulu');
+      assert(Array.isArray(c) && c.length === 2);
+      assert(typeof c[0] === 'number' && typeof c[1] === 'number');
+    });
+
+    test('getCoords returns null for unknown city', () => {
+      assertEqual(getCoords('Atlantis'), null);
+    });
+
+    test('getCoords handles falsy input', () => {
+      assertEqual(getCoords(null), null);
+      assertEqual(getCoords(''), null);
+    });
+
+    //  routeColor 
+
+    test('routeColor red when has unresolved alerts', () => {
+      const c = routeColor(true);
+      assert(c.toLowerCase().includes('ee') || c.toLowerCase() === '#ee0000' || c.toLowerCase() === 'red');
+    });
+
+    test('routeColor green when safe', () => {
+      const c = routeColor(false);
+      assertEqual(c, '#009966');
+    });
+
+    //  unresolvedCount 
+
+    test('unresolvedCount returns 0 for empty', () => {
+      assertEqual(unresolvedCount([]), 0);
+    });
+
+    test('unresolvedCount counts only unresolved', () => {
+      const alerts = [
+        { id: 1, is_resolved: false },
+        { id: 2, is_resolved: true },
+        { id: 3, is_resolved: false },
+      ];
+      assertEqual(unresolvedCount(alerts), 2);
+    });
+
+    //  latestReadingTemp 
+
+    test('latestReadingTemp returns null for empty readings', () => {
+      assertEqual(latestReadingTemp([]), null);
+    });
+
+    test('latestReadingTemp picks newest by ts', () => {
+      const readings = [
+        { id: 1, temp: 5, ts: '2026-04-25 09:00:00' },
+        { id: 2, temp: 9, ts: '2026-04-25 11:00:00' },
+        { id: 3, temp: 7, ts: '2026-04-25 10:00:00' },
+      ];
+      assertEqual(latestReadingTemp(readings), 9);
+    });
+
+    //  buildRoute 
+
+    test('buildRoute returns null when origin unknown', () => {
+      const out = buildRoute(
+        { id: 1, name: 'X', origin: 'Atlantis', destination: 'Oulu', status: 'active' },
+        [], [],
+      );
+      assertEqual(out, null);
+    });
+
+    test('buildRoute returns null when destination unknown', () => {
+      const out = buildRoute(
+        { id: 1, name: 'X', origin: 'Oulu', destination: 'Atlantis', status: 'active' },
+        [], [],
+      );
+      assertEqual(out, null);
+    });
+
+    test('buildRoute returns coords pair and green color when no alerts', () => {
+      const out = buildRoute(
+        { id: 1, name: 'X', origin: 'Oulu', destination: 'Helsinki', status: 'active' },
+        [],
+        [],
+      );
+      assert(out !== null);
+      assertEqual(out.coords.length, 2);
+      assertEqual(out.color, '#009966');
+    });
+
+    test('buildRoute returns red color when shipment has unresolved alert', () => {
+      const out = buildRoute(
+        { id: 1, name: 'X', origin: 'Oulu', destination: 'Helsinki', status: 'active' },
+        [{ id: 99, is_resolved: false }],
+        [],
+      );
+      assert(out !== null);
+      assert(out.color !== '#009966');
+    });
+
+    test('buildRoute popup HTML contains shipment name', () => {
+      const out = buildRoute(
+        { id: 1, name: 'Truck-001', origin: 'Oulu', destination: 'Helsinki', status: 'active' },
+        [],
+        [],
+      );
+      assert(out.popupHtml.includes('Truck-001'));
+    });
+
+    //  buildPopupHtml 
+
+    test('buildPopupHtml shows latest temp when given', () => {
+      const html = buildPopupHtml(
+        { id: 1, name: 'S1', status: 'active', origin: 'Oulu', destination: 'Helsinki' },
+        4.2,
+        0,
+      );
+      assert(html.includes('4.2'));
+    });
+
+    test('buildPopupHtml handles null temp', () => {
+      const html = buildPopupHtml(
+        { id: 1, name: 'S1', status: 'active', origin: 'Oulu', destination: 'Helsinki' },
+        null,
+        0,
+      );
+      // should not crash, should render something reasonable
+      assert(typeof html === 'string' && html.length > 0);
+    });
+
+    test('buildPopupHtml shows alert count when nonzero', () => {
+      const html = buildPopupHtml(
+        { id: 1, name: 'S1', status: 'active', origin: 'Oulu', destination: 'Helsinki' },
+        2,
+        3,
+      );
+      assert(html.includes('3'));
+    });
+
+    //  run 
+
+    (async () => {
+      const results = document.getElementById('results');
+      let pass = 0, fail = 0;
+      for (const t of tests) {
+        const div = document.createElement('div');
+        div.className = 'test';
+        try {
+          await t.fn();
+          div.classList.add('pass');
+          div.innerHTML = `<span class="name">✓ ${t.name}</span>`;
+          pass++;
+        } catch (e) {
+          div.classList.add('fail');
+          div.innerHTML = `<span class="name">✗ ${t.name}</span><div class="err">${e.message}</div>`;
+          fail++;
+        }
+        results.appendChild(div);
+      }
+      const summary = document.getElementById('summary');
+      summary.textContent = `${pass} passed, ${fail} failed (${tests.length} total)`;
+      summary.style.color = fail === 0 ? 'var(--accent)' : 'var(--danger)';
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>api.js tests</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #eaeaea;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --accent: #009966;
+      --danger: #ee0000;
+      --danger-light: #fff0f0;
+    }
+    body {
+      font-family: 'Geist', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+      max-width: 800px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    h1 { font-weight: 600; }
+    .summary {
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-family: 'Geist Mono', monospace;
+    }
+    .test {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: var(--surface);
+    }
+    .test.pass { border-left: 3px solid var(--accent); }
+    .test.fail { border-left: 3px solid var(--danger); background: var(--danger-light); }
+    .name { font-weight: 500; }
+    .err {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>api.js tests</h1>
+  <div id="summary" class="summary">running...</div>
+  <div id="results"></div>
+
+  <script type="module">
+    import * as api from '../api.js';
+
+    // tiny test harness
+    const tests = [];
+    function test(name, fn) { tests.push({ name, fn }); }
+    function assert(cond, msg) {
+      if (!cond) throw new Error(msg || 'assertion failed');
+    }
+    function assertEqual(actual, expected, msg) {
+      const a = JSON.stringify(actual);
+      const e = JSON.stringify(expected);
+      if (a !== e) throw new Error((msg || 'not equal') + `\n  expected: ${e}\n  actual:   ${a}`);
+    }
+
+    // fetch stub: each test sets up what the next call should see and return
+    let fetchCalls = [];
+    let nextResponse = null;
+
+    function stubFetch(response) {
+      fetchCalls = [];
+      nextResponse = response;
+      window.fetch = async (url, opts = {}) => {
+        fetchCalls.push({ url, opts });
+        if (response instanceof Error) throw response;
+        return {
+          ok: response.ok ?? true,
+          status: response.status ?? 200,
+          statusText: response.statusText ?? 'OK',
+          json: async () => response.body ?? null,
+        };
+      };
+    }
+
+    //  BASE_URL 
+    test('exports BASE_URL', () => {
+      assert(typeof api.BASE_URL === 'string', 'BASE_URL should be a string');
+      assert(api.BASE_URL.length > 0, 'BASE_URL should not be empty');
+    });
+
+    //  getShipments 
+    test('getShipments hits GET /shipments', async () => {
+      stubFetch({ body: [{ id: 1, name: 'S1' }] });
+      const data = await api.getShipments();
+      assertEqual(fetchCalls.length, 1);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments`);
+      const method = fetchCalls[0].opts.method ?? 'GET';
+      assertEqual(method, 'GET');
+      assertEqual(data, [{ id: 1, name: 'S1' }]);
+    });
+
+    test('getShipments throws on non-OK response', async () => {
+      stubFetch({ ok: false, status: 500, statusText: 'Server Error' });
+      let threw = false;
+      try { await api.getShipments(); } catch (e) { threw = true; }
+      assert(threw, 'should have thrown');
+    });
+
+    test('getShipments throws on network failure', async () => {
+      stubFetch(new Error('network down'));
+      let threw = false;
+      try { await api.getShipments(); } catch (e) { threw = true; }
+      assert(threw, 'should have thrown');
+    });
+
+    //  createShipment 
+    test('createShipment posts JSON to /shipments', async () => {
+      stubFetch({ status: 201, body: { id: 5, name: 'S5' } });
+      const payload = { name: 'S5', origin: 'Oulu', destination: 'Helsinki' };
+      const data = await api.createShipment(payload);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments`);
+      assertEqual(fetchCalls[0].opts.method, 'POST');
+      assertEqual(fetchCalls[0].opts.headers['Content-Type'], 'application/json');
+      assertEqual(JSON.parse(fetchCalls[0].opts.body), payload);
+      assertEqual(data, { id: 5, name: 'S5' });
+    });
+
+    test('createShipment throws on 400', async () => {
+      stubFetch({ ok: false, status: 400, statusText: 'Bad Request' });
+      let threw = false;
+      try { await api.createShipment({}); } catch (e) { threw = true; }
+      assert(threw);
+    });
+
+    //  getShipment 
+    test('getShipment hits /shipments/{id}', async () => {
+      stubFetch({ body: { id: 7 } });
+      const data = await api.getShipment(7);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments/7`);
+      assertEqual(data, { id: 7 });
+    });
+
+    test('getShipment throws on 404', async () => {
+      stubFetch({ ok: false, status: 404 });
+      let threw = false;
+      try { await api.getShipment(999); } catch (e) { threw = true; }
+      assert(threw);
+    });
+
+    //  getReadings 
+    test('getReadings hits /shipments/{id}/readings', async () => {
+      stubFetch({ body: [] });
+      await api.getReadings(3);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments/3/readings`);
+    });
+
+    //  createReading 
+    test('createReading posts JSON to /shipments/{id}/readings', async () => {
+      stubFetch({ status: 201, body: [{ id: 1, temp: 5 }, null] });
+      const payload = { temp: 5, humidity: 60 };
+      const data = await api.createReading(2, payload);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments/2/readings`);
+      assertEqual(fetchCalls[0].opts.method, 'POST');
+      assertEqual(JSON.parse(fetchCalls[0].opts.body), payload);
+      // POST /readings returns [reading, alert_or_null]
+      assertEqual(data, [{ id: 1, temp: 5 }, null]);
+    });
+
+    test('createReading returns reading + alert when temp out of range', async () => {
+      stubFetch({
+        status: 201,
+        body: [
+          { id: 9, temp: 99 },
+          { id: 1, msg: 'out of range', is_resolved: false },
+        ],
+      });
+      const data = await api.createReading(2, { temp: 99 });
+      assertEqual(data[0].id, 9);
+      assertEqual(data[1].is_resolved, false);
+    });
+
+    //  getAlerts 
+    test('getAlerts hits /shipments/{id}/alerts', async () => {
+      stubFetch({ body: [] });
+      await api.getAlerts(4);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments/4/alerts`);
+    });
+
+    //  resolveAlert 
+    test('resolveAlert PUTs is_resolved:true', async () => {
+      stubFetch({ body: { id: 1, is_resolved: true } });
+      await api.resolveAlert(2, 1);
+      assertEqual(fetchCalls[0].url, `${api.BASE_URL}/shipments/2/alerts/1`);
+      assertEqual(fetchCalls[0].opts.method, 'PUT');
+      assertEqual(fetchCalls[0].opts.headers['Content-Type'], 'application/json');
+      const body = JSON.parse(fetchCalls[0].opts.body);
+      assertEqual(body.is_resolved, true);
+    });
+
+    test('resolveAlert throws on 404', async () => {
+      stubFetch({ ok: false, status: 404 });
+      let threw = false;
+      try { await api.resolveAlert(2, 999); } catch (e) { threw = true; }
+      assert(threw);
+    });
+
+    //  run 
+    (async () => {
+      const results = document.getElementById('results');
+      let pass = 0, fail = 0;
+      for (const t of tests) {
+        const div = document.createElement('div');
+        div.className = 'test';
+        try {
+          await t.fn();
+          div.classList.add('pass');
+          div.innerHTML = `<span class="name">✓ ${t.name}</span>`;
+          pass++;
+        } catch (e) {
+          div.classList.add('fail');
+          div.innerHTML = `<span class="name">✗ ${t.name}</span><div class="err">${e.message}</div>`;
+          fail++;
+        }
+        results.appendChild(div);
+      }
+      const summary = document.getElementById('summary');
+      summary.textContent = `${pass} passed, ${fail} failed (${tests.length} total)`;
+      summary.style.color = fail === 0 ? 'var(--accent)' : 'var(--danger)';
+    })();
+  </script>
+</body>
+</html>

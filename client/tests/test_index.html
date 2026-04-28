@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>index.js tests</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #eaeaea;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --accent: #009966;
+      --danger: #ee0000;
+      --danger-light: #fff0f0;
+    }
+    body {
+      font-family: 'Geist', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+      max-width: 800px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    h1 { font-weight: 600; }
+    .summary {
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-family: 'Geist Mono', monospace;
+    }
+    .test {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: var(--surface);
+    }
+    .test.pass { border-left: 3px solid var(--accent); }
+    .test.fail { border-left: 3px solid var(--danger); background: var(--danger-light); }
+    .name { font-weight: 500; }
+    .err {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>index.js tests</h1>
+  <div id="summary" class="summary">running...</div>
+  <div id="results"></div>
+
+  <script type="module">
+    import { buildSummary, renderTable, renderSummary, statusBadgeClass } from '../index.js';
+
+    const tests = [];
+    function test(name, fn) { tests.push({ name, fn }); }
+    function assert(cond, msg) {
+      if (!cond) throw new Error(msg || 'assertion failed');
+    }
+    function assertEqual(actual, expected, msg) {
+      const a = JSON.stringify(actual);
+      const e = JSON.stringify(expected);
+      if (a !== e) throw new Error((msg || 'not equal') + `\n  expected: ${e}\n  actual:   ${a}`);
+    }
+
+    //  buildSummary 
+
+    test('buildSummary returns zeros for empty shipments', () => {
+      const s = buildSummary([], {});
+      assertEqual(s.total, 0);
+      assertEqual(s.active, 0);
+      assertEqual(s.unresolved, 0);
+      assertEqual(s.latestUnresolvedMsg, null);
+    });
+
+    test('buildSummary counts total and active', () => {
+      const shipments = [
+        { id: 1, status: 'active' },
+        { id: 2, status: 'delivered' },
+        { id: 3, status: 'active' },
+      ];
+      const s = buildSummary(shipments, { 1: [], 2: [], 3: [] });
+      assertEqual(s.total, 3);
+      assertEqual(s.active, 2);
+    });
+
+    test('buildSummary counts only unresolved alerts', () => {
+      const shipments = [{ id: 1, status: 'active' }];
+      const alerts = {
+        1: [
+          { id: 10, msg: 'a', is_resolved: false, created_at: '2026-04-25 10:00:00' },
+          { id: 11, msg: 'b', is_resolved: true, created_at: '2026-04-25 11:00:00' },
+          { id: 12, msg: 'c', is_resolved: false, created_at: '2026-04-25 12:00:00' },
+        ],
+      };
+      const s = buildSummary(shipments, alerts);
+      assertEqual(s.unresolved, 2);
+    });
+
+    test('buildSummary picks the most recent unresolved alert message', () => {
+      const shipments = [{ id: 1, status: 'active' }, { id: 2, status: 'active' }];
+      const alerts = {
+        1: [
+          { id: 10, msg: 'older', is_resolved: false, created_at: '2026-04-25 09:00:00' },
+        ],
+        2: [
+          { id: 20, msg: 'newer', is_resolved: false, created_at: '2026-04-25 12:00:00' },
+          { id: 21, msg: 'resolved one', is_resolved: true, created_at: '2026-04-25 13:00:00' },
+        ],
+      };
+      const s = buildSummary(shipments, alerts);
+      assertEqual(s.latestUnresolvedMsg, 'newer');
+    });
+
+    test('buildSummary returns null msg when all alerts resolved', () => {
+      const shipments = [{ id: 1, status: 'active' }];
+      const alerts = {
+        1: [{ id: 10, msg: 'x', is_resolved: true, created_at: '2026-04-25 09:00:00' }],
+      };
+      const s = buildSummary(shipments, alerts);
+      assertEqual(s.unresolved, 0);
+      assertEqual(s.latestUnresolvedMsg, null);
+    });
+
+    //  statusBadgeClass 
+
+    test('statusBadgeClass maps active to badge-active', () => {
+      assertEqual(statusBadgeClass('active'), 'badge-active');
+    });
+
+    test('statusBadgeClass maps delivered to badge-delivered', () => {
+      assertEqual(statusBadgeClass('delivered'), 'badge-delivered');
+    });
+
+    test('statusBadgeClass falls back to badge-other', () => {
+      assertEqual(statusBadgeClass('weird'), 'badge-other');
+      assertEqual(statusBadgeClass(null), 'badge-other');
+    });
+
+    //  renderTable 
+
+    function makeTbody() {
+      const t = document.createElement('table');
+      const tb = document.createElement('tbody');
+      t.appendChild(tb);
+      return tb;
+    }
+
+    test('renderTable shows empty state when no shipments', () => {
+      const tb = makeTbody();
+      renderTable(tb, [], {});
+      assertEqual(tb.querySelectorAll('tr').length, 1);
+      assert(tb.textContent.toLowerCase().includes('no shipments'));
+    });
+
+    test('renderTable produces one row per shipment', () => {
+      const tb = makeTbody();
+      const shipments = [
+        { id: 1, name: 'S1', origin: 'Oulu', destination: 'Helsinki', status: 'active', min_temperature: -10, max_temperature: 5, created_at: '2026-04-25 10:00:00' },
+        { id: 2, name: 'S2', origin: 'Tampere', destination: 'Turku', status: 'delivered', min_temperature: -25, max_temperature: -18, created_at: '2026-04-25 11:00:00' },
+      ];
+      renderTable(tb, shipments, { 1: 0, 2: 3 });
+      assertEqual(tb.querySelectorAll('tr').length, 2);
+    });
+
+    test('renderTable links shipment name to detail page', () => {
+      const tb = makeTbody();
+      renderTable(tb, [{ id: 7, name: 'X', origin: 'a', destination: 'b', status: 'active' }], { 7: 0 });
+      const link = tb.querySelector('a');
+      assert(link, 'should render a link');
+      assert(link.getAttribute('href').includes('shipment.html?id=7'));
+    });
+
+    test('renderTable shows alert count per shipment', () => {
+      const tb = makeTbody();
+      const shipments = [{ id: 1, name: 'S1', origin: 'a', destination: 'b', status: 'active' }];
+      renderTable(tb, shipments, { 1: 4 });
+      assert(tb.textContent.includes('4'), 'alert count 4 should appear');
+    });
+
+    test('renderTable applies correct status badge class', () => {
+      const tb = makeTbody();
+      renderTable(tb, [{ id: 1, name: 'S1', origin: 'a', destination: 'b', status: 'active' }], { 1: 0 });
+      assert(tb.querySelector('.badge-active'), 'active badge should exist');
+
+      const tb2 = makeTbody();
+      renderTable(tb2, [{ id: 2, name: 'S2', origin: 'a', destination: 'b', status: 'delivered' }], { 2: 0 });
+      assert(tb2.querySelector('.badge-delivered'), 'delivered badge should exist');
+    });
+
+    //  renderSummary 
+
+    test('renderSummary writes counts into provided elements', () => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <span id="stat-total"></span>
+        <span id="stat-active"></span>
+        <span id="stat-unresolved"></span>
+        <span id="stat-msg"></span>
+      `;
+      renderSummary(wrap, { total: 5, active: 3, unresolved: 2, latestUnresolvedMsg: 'oh no' });
+      assertEqual(wrap.querySelector('#stat-total').textContent, '5');
+      assertEqual(wrap.querySelector('#stat-active').textContent, '3');
+      assertEqual(wrap.querySelector('#stat-unresolved').textContent, '2');
+      assert(wrap.querySelector('#stat-msg').textContent.includes('oh no'));
+    });
+
+    test('renderSummary shows fallback when no unresolved alerts', () => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <span id="stat-total"></span>
+        <span id="stat-active"></span>
+        <span id="stat-unresolved"></span>
+        <span id="stat-msg"></span>
+      `;
+      renderSummary(wrap, { total: 1, active: 1, unresolved: 0, latestUnresolvedMsg: null });
+      const msg = wrap.querySelector('#stat-msg').textContent.toLowerCase();
+      assert(msg.includes('no') || msg.includes('-') || msg.includes('none'), 'should show empty state');
+    });
+
+    //  run 
+
+    (async () => {
+      const results = document.getElementById('results');
+      let pass = 0, fail = 0;
+      for (const t of tests) {
+        const div = document.createElement('div');
+        div.className = 'test';
+        try {
+          await t.fn();
+          div.classList.add('pass');
+          div.innerHTML = `<span class="name">✓ ${t.name}</span>`;
+          pass++;
+        } catch (e) {
+          div.classList.add('fail');
+          div.innerHTML = `<span class="name">✗ ${t.name}</span><div class="err">${e.message}</div>`;
+          fail++;
+        }
+        results.appendChild(div);
+      }
+      const summary = document.getElementById('summary');
+      summary.textContent = `${pass} passed, ${fail} failed (${tests.length} total)`;
+      summary.style.color = fail === 0 ? 'var(--accent)' : 'var(--danger)';
+    })();
+  </script>
+</body>
+</html>
