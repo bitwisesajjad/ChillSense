@@ -168,8 +168,6 @@ paths:
           description: Duplicate key found; existing delivery returned
         '400':
           description: Invalid request body
-        '409':
-          description: Duplicate conflict detected during insert
         '415':
           description: Request body is not valid JSON
 

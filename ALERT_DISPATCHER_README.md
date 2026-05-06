@@ -5,6 +5,44 @@ Its job is to read unresolved alerts from the main API and create delivery logs 
 
 Main project guide: [README.md](README.md)
 
+## Data model (service-local)
+
+The alert-dispatcher service maintains two local database tables: `Webhook` and `Delivery`. The diagram below shows their structure and how they relate to external entities (`Alert`, `Shipment`) owned by the main ChillSense API.
+
+```mermaid
+classDiagram
+    class Webhook {
+        Integer id
+        String name
+        String target_url
+        Integer status
+        DateTime created_at
+        DateTime updated_at
+    }
+    class Delivery {
+        Integer id
+        Integer alert_id
+        Integer shipment_id
+        Integer webhook_id
+        String target_url
+        String status
+        Integer response_code
+        String error_message
+        Integer attempt_count
+        DateTime created_at
+    }
+    class Alert {
+        Integer id
+        String msg
+        String severity
+        Boolean is_resolved
+        DateTime created_at
+    }
+
+    Webhook "1" -- "many" Delivery : has
+    Delivery "many" -- "1" Alert : triggered_by
+```
+
 ## 1. Required justification: why this auxiliary service exists
 
 ### 1.1. What this service does (approximation accepted by course requirement)
@@ -73,10 +111,10 @@ The diagrams below show how services are connected and which communication proto
 
 ```mermaid
 flowchart TB
-    user[User or Tester]
+    user["User or Tester"]
 
     subgraph edge[Edge layer]
-        nginx[NGINX reverse proxy :5001]
+        nginx["NGINX reverse proxy - port 5001 - production-like"]
     end
 
     subgraph app[Application layer]
@@ -91,14 +129,13 @@ flowchart TB
         sqlite[(SQLite alert_dispatcher.db)]
     end
 
-    user -->|HTTP| nginx
+    user -->|HTTP port 5001 prod-like| nginx
     nginx -->|HTTP /api/*| api
     nginx -->|HTTP /dispatcher/*| dispatcher
 
-    user -->|HTTP direct in dev :5002| dispatcher
     poller -->|internal call poll_and_dispatch_alerts| dispatcher
-    dispatcher -->|HTTP GET /api/alerts| api
-    dispatcher -->|HTTP POST /deliveries| dispatcher
+    poller -->|HTTP GET /api/alerts| api
+    poller -->|HTTP POST /deliveries| dispatcher
 
     api -->|SQL| pg
     dispatcher -->|SQLite file I/O| sqlite
@@ -108,22 +145,30 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
+    actor Sensor as Sensor/Client
     actor User
     participant N as NGINX
     participant A as ChillSense API service
     participant PG as PostgreSQL
     participant D as Alert Dispatcher API
-    participant P as Poller logic
+    participant P as Poller runtime
     participant S as SQLite
 
-    User->>N: GET /dispatcher/polling-now
-    N->>D: forward request
-    D->>P: poll_and_dispatch_alerts()
+    Sensor->>N: POST /api/shipments/{id}/readings
+    N->>A: forward request
+    A->>PG: INSERT reading
+    alt Temperature out of range
+        A->>PG: INSERT alert
+    end
+    A-->>N: 201 response
+    N-->>Sensor: 201 response
+
+    Note over P,D: Background poller runs every POLL_INTERVAL_SECONDS
 
     P->>A: GET /api/alerts
     A->>PG: SELECT alerts
     PG-->>A: result rows
-    A-->>P: alerts JSON
+    A-->>P: alerts JSON (includes unresolved)
 
     loop each unresolved alert x active webhook
         P->>D: POST /deliveries
@@ -133,13 +178,19 @@ sequenceDiagram
     end
 
     P-->>D: summary
-    D-->>N: 200 response
-    N-->>User: 200 + summary
+
+    opt Demo/manual trigger only
+        User->>N: GET /dispatcher/polling-now
+        N->>D: forward request
+        D->>P: run one poll cycle now
+        D-->>N: 200 response
+        N-->>User: 200 + summary
+    end
 ```
 
 Deployment notes:
 
-- In production-like mode, public traffic enters through NGINX.
+- In production-like mode, public traffic enters through NGINX (NOTE: The diagrams above focus on production-like mode)
 - In development mode, alert-dispatcher can also be called directly on port `5002`.
 
 ## 6. Operational guide
@@ -150,26 +201,7 @@ This operational guide is mandatory documentation for this auxiliary service.
 
 ## 7. Documentation format used for public API/functions
 
-To satisfy the "method documentation" requirement in a service-oriented project, this auxiliary service documents public HTTP methods using OpenAPI/Swagger and documents internal callable functions with Python docstrings.
+Public HTTP endpoints are documented in OpenAPI/Swagger, and internal callable functions are documented with Python docstrings.
 
-- OpenAPI source: `services/alert_dispatcher/openapi.yaml`
-- Swagger UI source loading: configured in `services/alert_dispatcher/__init__.py` and exposed at `/apidocs/` when debug mode is enabled.
-- HTTP resources implementation: `services/alert_dispatcher/resources/`
+Detailed verification steps and endpoint-level checklist are documented in `ALERT_DISPATCHER_OPERATIONS.md` under **Verify API/function documentation requirement**.
 
-What is documented in OpenAPI for each public endpoint:
-
-- Short description/purpose (`summary` + `description`).
-- Input parameters (`path` params and `requestBody` schema, including allowed values).
-- Output (`200/201` response schema and payload shape).
-- Exception/error behavior (`400/404/409/415/502` response cases).
-
-Internal public function documentation locations:
-
-- Poll-and-dispatch flow: `services/alert_dispatcher/poller/dispatcher.py`
-- ChillSense API fetcher: `services/alert_dispatcher/poller/chillsense_client.py`
-- Polling runtime loop: `services/alert_dispatcher/poller/runtime.py`
-
-Note for reviewers:
-
-- API-level documentation is normative in `openapi.yaml`.
-- Function-level code documentation is intentionally concise in docstrings, while detailed API I/O/error contracts are maintained in OpenAPI.
