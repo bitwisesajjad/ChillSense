@@ -55,6 +55,8 @@ services:
     build:
       context: ./services/alert_dispatcher
       dockerfile: Dockerfile
+    volumes:
+      - ./services/alert_dispatcher:/app/services/alert_dispatcher
     restart: unless-stopped
     environment:
       - FLASK_DEBUG=0
