@@ -30,6 +30,17 @@ export const CITY_COORDS = {
   Hamburg: [53.5511, 9.9937],
   Rotterdam: [51.9244, 4.4777],
   Amsterdam: [52.3676, 4.9041],
+  // European capitals
+  Stockholm: [59.3293, 18.0686],
+  Copenhagen: [55.6761, 12.5683],
+  Paris: [48.8566, 2.3522],
+  Madrid: [40.4168, -3.7038],
+  Lisbon: [38.7223, -9.1393],
+  Rome: [41.9028, 12.4964],
+  Vienna: [48.2082, 16.3738],
+  Warsaw: [52.2297, 21.0122],
+  Prague: [50.0755, 14.4378],
+  Brussels: [50.8503, 4.3517],
   // South America (Chiquita route)
   Quito: [-0.1807, -78.4678],
 };
