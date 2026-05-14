@@ -110,8 +110,8 @@ Current status in this repository:
 #### 2.1. How to Run
 
 - Run `docker compose up --build`.
-  - The `postgres-db` container is created automatically with the empty database named `coldchain`. The database files in this container are persisted/mounted in the `postgres/data` directory.
-- Run `python db_init.py` to create tables and seed data only once
+  - The `postgres-db` container is created automatically with the database named `coldchain`. The database files are persisted in the `postgres/data` directory.
+  - Tables and seed data are automatically created and populated when the `api` service starts.
 - How to verify:
   - Run `docker exec -it postgres-db psql -U user -d coldchain` to check if the SQL schema is created.
     - Use the `\dt` command in the `psql` shell to check for tables.
@@ -215,8 +215,9 @@ pytest --cov=src --cov-report=term-missing -q
 
 #### 5.1. How to authenticate API requests
 
-- Use the token printed after running `python db_init.py` as an API key.
+- Use the admin API token printed during `docker compose up` (in the `api` container logs) as an API key.
 - Add header `Shipmenthub-Api-Key`: <printed_token> to HTTP requests.
+- To retrieve the token later, check the container logs: `docker compose logs api | grep "Generated admin"`
 
 #### 5.2. How to check cache
 
@@ -225,9 +226,15 @@ pytest --cov=src --cov-report=term-missing -q
 #### 5.2. How to reset DB
 
 ```bash
-(sudo rm -rf postgres/data/)
-python db_init.py
+# Stop and remove all containers and volumes
+docker compose down -v --remove-orphans
+
+# Clean up persistent data
+sudo rm -rf postgres/data/
 sudo rm -rf instance/cache/
+
+# Restart
+docker compose up --build
 ```
 
 ---
@@ -409,7 +416,6 @@ sudo rm -rf instance/cache/
 docker compose down -v --remove-orphans
 docker builder prune -f
 docker compose up --build
-python db_init.py
 ```
 
 ## Cloud Deployment (Production)

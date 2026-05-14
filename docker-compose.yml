@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: coldchain
     volumes:
       - ./postgres/data:/var/lib/postgresql/data
-      - ./postgres/init:/docker-entrypoint-initdb.d
+      # - ./postgres/init:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
   api:
@@ -26,7 +26,7 @@ services:
       - POSTGRES_DB=coldchain
       - POSTGRES_HOST=postgres-db
       - FLASK_APP=src:create_app
-    command: flask --app src:create_app run --host=0.0.0.0 --port=5000
+    command: sh -c "for i in 1 2 3 4 5 6 7 8 9 10; do python3 db_init.py && break || sleep 2; done; flask --app src:create_app run --host=0.0.0.0 --port=5000"
     ports:
       - "5001:5000"
     depends_on:

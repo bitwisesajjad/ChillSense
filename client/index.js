@@ -181,9 +181,9 @@ function wireForm() {
   const formMsg = document.getElementById('form-msg');
 
   toggleBtn.addEventListener('click', () => {
-    const open = formCard.style.display !== 'none';
-    formCard.style.display = open ? 'none' : 'block';
-    toggleBtn.textContent = open ? 'New Shipment' : 'Cancel';
+    const isHidden = window.getComputedStyle(formCard).display === 'none';
+    formCard.style.display = isHidden ? 'block' : 'none';
+    toggleBtn.textContent = isHidden ? 'Cancel' : 'New Shipment';
   });
 
   form.addEventListener('submit', async e => {
