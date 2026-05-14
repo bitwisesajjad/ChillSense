@@ -72,7 +72,7 @@ action panel is part of the page above it.
 
 ## Screenshots
 
-Real screenshots of the three pages, taken in our local host implementation, are provided bellow. The UI is identical on the Cloud VM deployment.
+Real screenshots of the three pages, taken in our local host implementation, are provided below. The UI is identical on the Cloud VM deployment.
 
 ### Dashboard
 
@@ -130,14 +130,20 @@ That's the only place the URL appears, every page imports from here.
 
 ## Running tests
 
-The test suite lives in `tests/` and runs in the browser. With the local
-server running on port 8080, open these URLs:
+The test suite lives in `tests/` and runs in the browser. Start the local server (if it isn't already running from the "How to run" step):
+
+```bash
+cd client
+python -m http.server 8080
+```
+
+Then open these URLs in any browser:
 
 ```
-http://localhost:8080/tests/test_api.html
-http://localhost:8080/tests/test_index.html
-http://localhost:8080/tests/test_map.html
-http://localhost:8080/tests/test_shipment.html
+http://localhost:8080/tests/test_api.html       (14 tests)
+http://localhost:8080/tests/test_index.html     (15 tests)
+http://localhost:8080/tests/test_map.html       (17 tests)
+http://localhost:8080/tests/test_shipment.html  (17 tests)
 ```
 
 Each page shows a green / red summary at the top and a list of every test.
@@ -153,6 +159,8 @@ running. They cover:
 
 If a test fails, the row turns red and shows the assertion error
 inline so you can see what went wrong without opening the console.
+
+![Test results](./tests/tests.png)
 
 ## Libraries
 
