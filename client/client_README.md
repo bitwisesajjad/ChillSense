@@ -88,27 +88,26 @@ Real screenshots of the three pages, taken in our local host implementation, are
 
 ## How to run
 
-You need the ChillSense API running first. From the project root:
+The client is served automatically by Docker Compose, no separate command needed. From the project root:
 
 ```bash
 docker compose up
 ```
 
-The API will be at `http://localhost:5001/api`. For the full API setup
-(Postgres details, NGINX, troubleshooting, environment variables), see
-the [project root README](../README.md).
+Then open the client in a browser:
 
-Then serve the client. From inside `client/`:
+- Dev mode: `http://localhost:5003/`
+- Production mode (`docker-compose.prod.yml`): `http://localhost:5001/`
+
+For full API setup (Postgres details, NGINX, troubleshooting, environment variables), see the [project root README](../README.md).
+
+If you want to run the client without Docker (against a remote API), serve it manually from inside `client/`:
 
 ```bash
 python -m http.server 8080
 ```
 
-Open `http://localhost:8080/index.html` in any browser.
-
-You can also open the HTML files directly from the filesystem (`file://...`)
-but ES module imports are flaky over `file://` in some browsers, so the
-local web server is the recommended way.
+Then open `http://localhost:8080/index.html` in any browser. Don't open the HTML files via `file://` directly, ES module imports are flaky there.
 
 ## Configuring the API URL
 
@@ -130,21 +129,16 @@ That's the only place the URL appears, every page imports from here.
 
 ## Running tests
 
-The test suite lives in `tests/` and runs in the browser. Start the local server (if it isn't already running from the "How to run" step):
-
-```bash
-cd client
-python -m http.server 8080
-```
-
-Then open these URLs in any browser:
+The test suite lives in `tests/` and runs in the browser. With Docker Compose already running, open these URLs:
 
 ```
-http://localhost:8080/tests/test_api.html       (14 tests)
-http://localhost:8080/tests/test_index.html     (15 tests)
-http://localhost:8080/tests/test_map.html       (17 tests)
-http://localhost:8080/tests/test_shipment.html  (17 tests)
+http://localhost:5003/tests/test_api.html       (14 tests)
+http://localhost:5003/tests/test_index.html     (15 tests)
+http://localhost:5003/tests/test_map.html       (17 tests)
+http://localhost:5003/tests/test_shipment.html  (17 tests)
 ```
+
+If you're running the client standalone via `python -m http.server 8080`, use port `8080` instead of `5003`.
 
 Each page shows a green / red summary at the top and a list of every test.
 The tests stub `window.fetch` (or pass fake data straight into render
