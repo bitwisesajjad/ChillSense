@@ -240,14 +240,15 @@ pytest --cov=src --cov-report=term-missing -q
 
 ```bash
 # Stop and remove all containers and volumes
-docker compose down -v --remove-orphans
+docker compose down -v --remove-orphans  # docker compose -f docker-compose.prod.yml down -v --remove-orphans
 
 # Clean up persistent data
 sudo rm -rf postgres/data/
 sudo rm -rf instance/cache/
+sudo rm services/alert_dispatcher/alert_dispatcher.db
 
 # Restart
-docker compose up --build
+docker compose up --build  # docker compose -f docker-compose.prod.yml up --build
 ```
 
 ---
