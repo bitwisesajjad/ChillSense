@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620" font-family="system-ui, -apple-system, 'Helvetica Neue', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#888780"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="620" fill="#ffffff"/>
+
+  <text x="450" y="32" text-anchor="middle" font-size="18" font-weight="700" fill="#000000">
+    ChillSense — use case diagram
+  </text>
+
+  <rect x="260" y="64" width="380" height="448" rx="8" ry="8"
+        fill="#ffffff" stroke="#888780" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="450" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">
+    ChillSense system
+  </text>
+
+  <g transform="translate(70, 200)">
+    <circle cx="30" cy="0" r="14" fill="#F1EFE8" stroke="#888780" stroke-width="1.2"/>
+    <line x1="30" y1="14" x2="30" y2="50" stroke="#888780" stroke-width="1.2"/>
+    <line x1="10" y1="28" x2="50" y2="28" stroke="#888780" stroke-width="1.2"/>
+    <line x1="30" y1="50" x2="14" y2="78" stroke="#888780" stroke-width="1.2"/>
+    <line x1="30" y1="50" x2="46" y2="78" stroke="#888780" stroke-width="1.2"/>
+    <text x="30" y="100" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">
+      Logistics manager
+    </text>
+    <text x="30" y="118" text-anchor="middle" font-size="11" fill="#5F5E5A">
+      (web client user)
+    </text>
+  </g>
+
+  <g transform="translate(770, 410)">
+    <rect x="6" y="-12" width="48" height="36" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="1.2"/>
+    <circle cx="22" cy="-2" r="2" fill="#888780"/>
+    <circle cx="38" cy="-2" r="2" fill="#888780"/>
+    <rect x="14" y="8" width="32" height="10" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <line x1="30" y1="24" x2="30" y2="38" stroke="#888780" stroke-width="1.2"/>
+    <line x1="20" y1="38" x2="40" y2="38" stroke="#888780" stroke-width="1.2"/>
+    <text x="30" y="60" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">
+      Sensor (IoT)
+    </text>
+    <text x="30" y="78" text-anchor="middle" font-size="11" fill="#5F5E5A">
+      mock-sensor service
+    </text>
+  </g>
+
+  <g>
+    <ellipse cx="380" cy="130" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="380" y="135" text-anchor="middle" font-size="13" fill="#000000">View shipments</text>
+  </g>
+  <g>
+    <ellipse cx="520" cy="180" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="520" y="185" text-anchor="middle" font-size="13" fill="#000000">Create shipment</text>
+  </g>
+  <g>
+    <ellipse cx="380" cy="230" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="380" y="235" text-anchor="middle" font-size="13" fill="#000000">View map</text>
+  </g>
+  <g>
+    <ellipse cx="520" cy="280" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="520" y="285" text-anchor="middle" font-size="13" fill="#000000">View shipment detail</text>
+  </g>
+  <g>
+    <ellipse cx="380" cy="330" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="380" y="335" text-anchor="middle" font-size="13" fill="#000000">Resolve alert</text>
+  </g>
+  <g>
+    <ellipse cx="520" cy="380" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="520" y="385" text-anchor="middle" font-size="13" fill="#000000">Simulate reading</text>
+  </g>
+  <g>
+    <ellipse cx="380" cy="450" rx="100" ry="22" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="380" y="455" text-anchor="middle" font-size="13" fill="#000000">Send sensor reading</text>
+  </g>
+
+  <g stroke="#888780" stroke-width="1" fill="none">
+    <line x1="125" y1="240" x2="180" y2="240"/>
+    <line x1="180" y1="130" x2="180" y2="380"/>
+    <line x1="180" y1="130" x2="280" y2="130"/>
+    <line x1="180" y1="180" x2="420" y2="180"/>
+    <line x1="180" y1="230" x2="280" y2="230"/>
+    <line x1="180" y1="280" x2="420" y2="280"/>
+    <line x1="180" y1="330" x2="280" y2="330"/>
+    <line x1="180" y1="380" x2="420" y2="380"/>
+  </g>
+
+  <g stroke="#888780" stroke-width="1" fill="none">
+    <line x1="770" y1="420" x2="720" y2="420"/>
+    <line x1="720" y1="420" x2="720" y2="450"/>
+    <line x1="720" y1="450" x2="480" y2="450"/>
+  </g>
+
+  <g font-size="11" fill="#5F5E5A">
+    <text x="20" y="568">Notation:</text>
+    <text x="20" y="588">Stick figures = actors. Ovals = use cases. Dashed box = system boundary.</text>
+    <text x="20" y="606">Lines connect each actor to the use cases they participate in.</text>
+  </g>
+</svg>
