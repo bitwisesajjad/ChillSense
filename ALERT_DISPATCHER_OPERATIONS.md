@@ -11,6 +11,16 @@ For Docker mode:
 In Docker mode, alert-dispatcher connects to the main API via `CHILLSENSE_BASE_URL=http://api:5000` (service-to-service network in compose).
 The same connection model is used in both `docker-compose.yml` and `docker-compose.prod.yml`.
 
+### Quick setup for Telegram delivery
+
+**Before running docker compose, add your Telegram bot credentials to a `.env` file in the project root:**
+
+```
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+```
+
+Then run as usual:
 
 ```bash
 # 1. Development mode (`docker-compose.yml`)
@@ -24,7 +34,7 @@ Useful endpoints in development:
 
 - Alert-dispatcher direct API: `http://localhost:5002/webhooks`
 - Deliveries list: `http://localhost:5002/deliveries`
-- One-shot polling: `http://localhost:5002/polling-now`
+<!-- - One-shot polling: `http://localhost:5002/polling-now` -->
 - Swagger UI (only if debug mode is enabled): `http://localhost:5002/apidocs/`
 
 In production-like mode, use NGINX route for one-shot polling:

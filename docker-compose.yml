@@ -45,7 +45,9 @@ services:
       - CHILLSENSE_BASE_URL=http://api:5000
       - ALERT_DISPATCHER_BASE_URL=http://alert-dispatcher:5002
       - REQUEST_TIMEOUT_SECONDS=5
-      - POLL_INTERVAL_SECONDS=600
+      - POLL_INTERVAL_SECONDS=20
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     command: >
       sh -c "python3 -m services.alert_dispatcher.init_db &&
       python3 -m services.alert_dispatcher.poller &

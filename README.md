@@ -13,6 +13,13 @@
 
 ### 1. Run with Docker Compose (recommended)
 
+**Before running docker compose, add your Telegram bot credentials to a `.env` file in the project root:**
+
+```
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+```
+
 #### 1.1. Development mode (`docker-compose.yml`)
 
 ```bash

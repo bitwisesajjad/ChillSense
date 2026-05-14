@@ -8,10 +8,54 @@ from .chillsense_client import fetch_active_alerts
 from ..models import Delivery, Webhook
 
 
-def send_webhook(url, payload):
-    """Mock webhook sender used in this implementation step."""
-    print("FAKE SEND:", url, payload)
-    return 200
+def _format_telegram_message(payload):
+    """Create a simple alert text for Telegram."""
+    parts = [f"Alert {payload.get('alert_id')}"]
+    shipment_id = payload.get("shipment_id")
+    if shipment_id is not None:
+        parts.append(f"Shipment {shipment_id}")
+    severity = payload.get("severity")
+    if severity is not None:
+        parts.append(f"Severity {severity}")
+    message = payload.get("message")
+    if message:
+        parts.append(str(message))
+    return "\n".join(parts)
+
+
+def send_webhook(webhook, payload):
+    """Send a webhook request and return the HTTP status code."""
+    if webhook.name != "telegram":
+        print("FAKE SEND:", webhook.target_url, payload)
+        return 200
+
+    timeout = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "5"))
+
+    if "api.telegram.org" in webhook.target_url and "sendMessage" in webhook.target_url:
+        token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+        if not token or not chat_id:
+            print("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID for Telegram")
+            return 500
+
+        endpoint = webhook.target_url.replace("<token>", token)
+        telegram_payload = {
+            "chat_id": chat_id,
+            "text": _format_telegram_message(payload),
+        }
+        try:
+            resp = requests.post(endpoint, json=telegram_payload, timeout=timeout)
+            return resp.status_code
+        except requests.RequestException as exc:
+            print(f"Telegram send failed: {exc}")
+            return 500
+
+    try:
+        resp = requests.post(webhook.target_url, json=payload, timeout=timeout)
+        return resp.status_code
+    except requests.RequestException as exc:
+        print(f"Webhook send failed: {exc}")
+        return 500
 
 
 def poll_and_dispatch_alerts():
@@ -57,7 +101,7 @@ def poll_and_dispatch_alerts():
                 skipped_duplicates += 1
                 continue
 
-            response_code = send_webhook(webhook.target_url, payload)
+            response_code = send_webhook(webhook, payload)
             status = "sent" if 200 <= response_code < 300 else "failed"
 
             delivery_payload = {
