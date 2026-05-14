@@ -72,19 +72,32 @@ Notes:
 - This is intentionally outside the main API server to avoid mixing core REST operations with long-running background jobs.
 
 Why not do this directly inside ChillSense API:
+
 - Webhook delivery depends on external networks and can be slow/fail intermittently.
 - Running dispatch logic inside request-response endpoints can increase latency and reduce API reliability.
 - A separate service provides cleaner isolation, independent restart behavior, and independent delivery audit storage.
 
 Demo note:
+
 - Alert-dispatcher also exposes `GET /polling-now` (direct on port `5002`) and `GET /dispatcher/polling-now` (via NGINX on port `5001`) for demo/manual trigger only.
 - It executes one immediate poll cycle and is not intended to replace the background poll loop scheduler.
 
 Alert-dispatcher documentation is split into two mandatory files:
+
 - Architecture + justification overview: [ALERT_DISPATCHER_README.md](ALERT_DISPATCHER_README.md)
 - Run/setup/test/demo operations guide: [ALERT_DISPATCHER_OPERATIONS.md](ALERT_DISPATCHER_OPERATIONS.md)
 
-#### 1.6. Mock sensor service configuration
+#### 1.6. Client (frontend) setup
+
+The browser client is served automatically when you run `docker compose up`
+(dev mode: `http://localhost:5003/`, prod mode: `http://localhost:5001/`).
+No build step or `npm install` is needed to run it.
+
+For client-specific documentation, including page layouts, browser tests,
+diagrams, screenshots, and how to point the client at a remote API, see
+[client/client-README.md](client/client-README.md).
+
+#### 1.7. Mock sensor service configuration
 
 Mock sensor source code is in `services/mock_sensor/sender.py`.
 
@@ -361,7 +374,7 @@ PYTHONPATH=. pytest --cov=src --cov-report=term
 
 This demo shows that creating an out-of-range reading can trigger an alert and then produce a delivery log entry through alert-dispatcher.
 
-1) Start stack (dev or prod):
+1. Start stack (dev or prod):
 
 ```bash
 docker compose up --build
@@ -369,7 +382,7 @@ docker compose up --build
 docker compose -f docker-compose.prod.yml up --build
 ```
 
-2) Create an out-of-range reading to trigger an alert:
+2. Create an out-of-range reading to trigger an alert:
 
 ```bash
 curl -i -X POST http://localhost:5001/api/shipments/1/readings \
@@ -377,7 +390,7 @@ curl -i -X POST http://localhost:5001/api/shipments/1/readings \
   -d '{"temp":999,"humidity":40}'
 ```
 
-3) Trigger one immediate polling cycle (recommended because current compose files set `POLL_INTERVAL_SECONDS=600`):
+3. Trigger one immediate polling cycle (recommended because current compose files set `POLL_INTERVAL_SECONDS=600`):
 
 ```bash
 # Development route (direct to alert-dispatcher)
@@ -387,7 +400,7 @@ curl -i http://localhost:5002/polling-now
 curl -i http://localhost:5001/dispatcher/polling-now
 ```
 
-4) Verify delivery logs were updated:
+4. Verify delivery logs were updated:
 
 ```bash
 curl -s http://localhost:5002/deliveries | python3 -m json.tool
