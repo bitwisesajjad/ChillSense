@@ -1,0 +1,246 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="680" viewBox="0 0 1080 680" font-family="system-ui, -apple-system, 'Helvetica Neue', sans-serif">
+  <rect width="1080" height="680" fill="#ffffff"/>
+
+  <text x="540" y="32" text-anchor="middle" font-size="18" font-weight="700" fill="#000000">
+    GUI layout — client pages
+  </text>
+
+  <!-- ============== Page 1: Dashboard (index.html) ============== -->
+  <g transform="translate(40, 64)">
+    <rect width="320" height="540" rx="6" ry="6" fill="#ffffff" stroke="#888780" stroke-width="1.2"/>
+
+    <rect x="0" y="0" width="320" height="36" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="12" y="23" font-size="11" font-weight="700" fill="#000000">ChillSense</text>
+    <text x="100" y="23" font-size="11" font-weight="700" fill="#000000">Dashboard</text>
+    <text x="170" y="23" font-size="11" fill="#5F5E5A">Map</text>
+
+    <text x="12" y="64" font-size="13" font-weight="700" fill="#000000">Dashboard</text>
+    <text x="12" y="80" font-size="10" fill="#5F5E5A">Cold-chain shipments at a glance</text>
+
+    <rect x="12" y="92"  width="70" height="44" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="47" y="108" text-anchor="middle" font-size="9"  fill="#5F5E5A">TOTAL</text>
+    <text x="47" y="125" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">3</text>
+
+    <rect x="86" y="92"  width="70" height="44" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="121" y="108" text-anchor="middle" font-size="9"  fill="#5F5E5A">ACTIVE</text>
+    <text x="121" y="125" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">3</text>
+
+    <rect x="160" y="92" width="70" height="44" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="195" y="108" text-anchor="middle" font-size="9"  fill="#5F5E5A">ALERTS</text>
+    <text x="195" y="125" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">1</text>
+
+    <rect x="234" y="92" width="74" height="44" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="271" y="108" text-anchor="middle" font-size="9"  fill="#5F5E5A">LATEST</text>
+    <text x="271" y="125" text-anchor="middle" font-size="9"  fill="#000000">vaccine cargo...</text>
+
+    <rect x="12" y="152" width="296" height="280" rx="4" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <rect x="12" y="152" width="296" height="28"  rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="22" y="170" font-size="11" font-weight="700" fill="#000000">Shipments</text>
+    <rect x="232" y="158" width="68" height="16" rx="3" fill="#888780"/>
+    <text x="266" y="170" text-anchor="middle" font-size="9" fill="#ffffff">+ New shipment</text>
+
+    <!-- table header: ID(20-40), NAME(48-110), ROUTE(118-218), STATUS(228-275), ALERTS(283-300) -->
+    <line x1="12" y1="196" x2="308" y2="196" stroke="#888780" stroke-width="0.6"/>
+    <text x="22"  y="192" font-size="9" fill="#5F5E5A">ID</text>
+    <text x="48"  y="192" font-size="9" fill="#5F5E5A">NAME</text>
+    <text x="118" y="192" font-size="9" fill="#5F5E5A">ROUTE</text>
+    <text x="228" y="192" font-size="9" fill="#5F5E5A">STATUS</text>
+    <text x="278" y="192" font-size="9" fill="#5F5E5A">ALERTS</text>
+
+    <!-- row 1 -->
+    <text x="22"  y="216" font-size="10" fill="#000000">1</text>
+    <text x="48"  y="216" font-size="10" fill="#000000">Truck-001</text>
+    <text x="118" y="216" font-size="10" fill="#000000">Berlin→Munich</text>
+    <text x="228" y="216" font-size="10" fill="#000000">active</text>
+    <text x="290" y="216" font-size="10" fill="#000000">1</text>
+    <line x1="12" y1="226" x2="308" y2="226" stroke="#888780" stroke-width="0.4"/>
+
+    <!-- row 2 -->
+    <text x="22"  y="244" font-size="10" fill="#000000">2</text>
+    <text x="48"  y="244" font-size="10" fill="#000000">Truck-101</text>
+    <text x="118" y="244" font-size="10" fill="#000000">Oslo→Hamburg</text>
+    <text x="228" y="244" font-size="10" fill="#000000">active</text>
+    <text x="290" y="244" font-size="10" fill="#000000">0</text>
+    <line x1="12" y1="254" x2="308" y2="254" stroke="#888780" stroke-width="0.4"/>
+
+    <!-- row 3 -->
+    <text x="22"  y="272" font-size="10" fill="#000000">3</text>
+    <text x="48"  y="272" font-size="10" fill="#000000">Truck-201</text>
+    <text x="118" y="272" font-size="10" fill="#000000">Quito→Rotterdam</text>
+    <text x="228" y="272" font-size="10" fill="#000000">active</text>
+    <text x="290" y="272" font-size="10" fill="#000000">0</text>
+    <line x1="12" y1="282" x2="308" y2="282" stroke="#888780" stroke-width="0.4"/>
+
+    <text x="160" y="320" text-anchor="middle" font-size="10" fill="#5F5E5A">...rows continue...</text>
+
+    <rect x="12" y="448" width="296" height="76" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8" stroke-dasharray="3 3"/>
+    <text x="160" y="478" text-anchor="middle" font-size="11" font-weight="700" fill="#000000">New shipment form</text>
+    <text x="160" y="494" text-anchor="middle" font-size="10" fill="#5F5E5A">(collapses inline; fields:</text>
+    <text x="160" y="508" text-anchor="middle" font-size="10" fill="#5F5E5A">name, origin, dest, status, min/max temp)</text>
+  </g>
+
+  <!-- Page label outside the page box -->
+  <text x="200" y="624" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">index.html</text>
+  <text x="200" y="640" text-anchor="middle" font-size="11" fill="#5F5E5A">Dashboard</text>
+
+  <!-- ============== Page 2: Map (map.html) ============== -->
+  <g transform="translate(380, 64)">
+    <rect width="320" height="540" rx="6" ry="6" fill="#ffffff" stroke="#888780" stroke-width="1.2"/>
+
+    <rect x="0" y="0" width="320" height="36" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="12" y="23" font-size="11" font-weight="700" fill="#000000">ChillSense</text>
+    <text x="100" y="23" font-size="11" fill="#5F5E5A">Dashboard</text>
+    <text x="170" y="23" font-size="11" font-weight="700" fill="#000000">Map</text>
+
+    <text x="12" y="64" font-size="13" font-weight="700" fill="#000000">Map</text>
+    <text x="12" y="80" font-size="10" fill="#5F5E5A">Routes colored by alert status</text>
+
+    <!-- map area -->
+    <rect x="12" y="92" width="296" height="400" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+
+    <!-- Recognizable Europe shapes drawn schematically. UK, Scandinavia, mainland EU. -->
+    <!-- UK + Ireland -->
+    <path d="M 66,200 Q 70,180 80,178 Q 92,182 95,200 Q 98,228 90,250 Q 75,256 65,238 Q 60,218 66,200 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+    <path d="M 50,222 Q 52,210 60,210 Q 65,218 64,232 Q 58,238 50,234 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- Iberian peninsula -->
+    <path d="M 70,338 Q 80,322 110,326 Q 130,332 134,358 Q 128,378 100,380 Q 75,374 68,360 Q 65,348 70,338 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- Mainland Europe (France, BeNeLux, Germany, Italy, Balkans) -->
+    <path d="M 120,210 Q 140,200 170,205 Q 195,210 210,225 Q 225,232 235,228 Q 245,228 248,242 Q 250,255 235,265
+             Q 240,280 232,290 Q 220,294 210,288 Q 200,302 190,322 Q 178,335 170,330 Q 158,328 152,318 Q 140,308 132,300
+             Q 120,290 122,278 Q 118,266 124,256 Q 116,244 120,232 Q 116,220 120,210 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- Italy (boot) -->
+    <path d="M 198,300 Q 206,310 210,330 Q 212,350 218,365 Q 222,372 220,380 Q 215,378 212,370 Q 208,358 204,346
+             Q 200,334 196,320 Q 194,310 198,300 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- Scandinavia -->
+    <path d="M 200,110 Q 215,100 230,108 Q 240,120 244,140 Q 248,160 240,180 Q 230,196 220,200
+             Q 215,182 220,160 Q 215,140 208,130 Q 198,124 200,110 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- Eastern Europe blob -->
+    <path d="M 246,200 Q 268,196 282,210 Q 290,230 286,250 Q 280,266 264,270 Q 252,266 248,254 Q 244,234 246,220 Q 244,210 246,200 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- North Africa coastline (suggestive, just a strip at the bottom) -->
+    <path d="M 60,396 Q 110,392 160,398 Q 210,402 260,398 Q 290,396 308,400 L 308,438 L 60,438 Z"
+          fill="#ffffff" stroke="#888780" stroke-width="0.7"/>
+
+    <!-- shipment routes (sit on top of the geography) -->
+    <!-- safe: solid line -->
+    <line x1="160" y1="240" x2="195" y2="290" stroke="#888780" stroke-width="2"/>
+    <circle cx="160" cy="240" r="4" fill="#888780"/>
+    <circle cx="195" cy="290" r="4" fill="#888780"/>
+
+    <!-- alert: dashed line -->
+    <line x1="220" y1="170" x2="180" y2="240" stroke="#888780" stroke-width="2" stroke-dasharray="4 2"/>
+    <circle cx="220" cy="170" r="4" fill="#888780"/>
+    <circle cx="180" cy="240" r="4" fill="#888780"/>
+
+    <!-- another safe route -->
+    <line x1="155" y1="300" x2="100" y2="350" stroke="#888780" stroke-width="2"/>
+    <circle cx="155" cy="300" r="4" fill="#888780"/>
+    <circle cx="100" cy="350" r="4" fill="#888780"/>
+
+    <!-- legend -->
+    <rect x="220" y="430" width="80" height="50" rx="3" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <line x1="228" y1="445" x2="244" y2="445" stroke="#888780" stroke-width="2"/>
+    <text x="250" y="448" font-size="9" fill="#000000">safe</text>
+    <line x1="228" y1="463" x2="244" y2="463" stroke="#888780" stroke-width="2" stroke-dasharray="3 2"/>
+    <text x="250" y="466" font-size="9" fill="#000000">alert</text>
+
+    <rect x="12" y="500" width="296" height="22" rx="3" fill="#F1EFE8" stroke="#888780" stroke-width="0.6" stroke-dasharray="3 3"/>
+    <text x="160" y="514" text-anchor="middle" font-size="9" fill="#5F5E5A">"N route(s) skipped (unknown city)" notice</text>
+  </g>
+
+  <!-- Page label outside the page box -->
+  <text x="540" y="624" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">map.html</text>
+  <text x="540" y="640" text-anchor="middle" font-size="11" fill="#5F5E5A">Map view</text>
+
+  <!-- ============== Page 3: Shipment detail (shipment.html) ============== -->
+  <g transform="translate(720, 64)">
+    <rect width="320" height="540" rx="6" ry="6" fill="#ffffff" stroke="#888780" stroke-width="1.2"/>
+
+    <rect x="0" y="0" width="320" height="36" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+    <text x="12" y="23" font-size="11" font-weight="700" fill="#000000">ChillSense</text>
+    <text x="100" y="23" font-size="11" fill="#5F5E5A">Dashboard</text>
+    <text x="170" y="23" font-size="11" fill="#5F5E5A">Map</text>
+
+    <text x="12" y="58" font-size="9" fill="#5F5E5A">Dashboard › Shipment #1</text>
+    <text x="12" y="76" font-size="13" font-weight="700" fill="#000000">Shipment detail</text>
+
+    <rect x="12" y="84" width="296" height="56" rx="4" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <rect x="12" y="84" width="296" height="20" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="22" y="98" font-size="10" font-weight="700" fill="#000000">Overview</text>
+    <text x="22"  y="120" font-size="9" fill="#5F5E5A">NAME</text>
+    <text x="22"  y="132" font-size="9" fill="#000000">Truck-001</text>
+    <text x="100" y="120" font-size="9" fill="#5F5E5A">ROUTE</text>
+    <text x="100" y="132" font-size="9" fill="#000000">Berlin → Munich</text>
+    <text x="200" y="120" font-size="9" fill="#5F5E5A">TEMP</text>
+    <text x="200" y="132" font-size="9" fill="#000000">2 / 8 °C</text>
+    <text x="260" y="120" font-size="9" fill="#5F5E5A">STATUS</text>
+    <text x="260" y="132" font-size="9" fill="#000000">active</text>
+
+    <rect x="12" y="148" width="296" height="120" rx="4" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <rect x="12" y="148" width="296" height="20" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="22" y="162" font-size="10" font-weight="700" fill="#000000">Temperature over time</text>
+
+    <line x1="22"  y1="248" x2="298" y2="248" stroke="#888780" stroke-width="0.4"/>
+    <line x1="22"  y1="180" x2="298" y2="180" stroke="#888780" stroke-width="0.6" stroke-dasharray="3 2"/>
+    <line x1="22"  y1="240" x2="298" y2="240" stroke="#888780" stroke-width="0.6" stroke-dasharray="3 2"/>
+    <polyline points="30,210 80,200 130,232 180,238 230,222 280,202"
+              fill="none" stroke="#888780" stroke-width="1.2"/>
+    <circle cx="30"  cy="210" r="2" fill="#888780"/>
+    <circle cx="80"  cy="200" r="2" fill="#888780"/>
+    <circle cx="130" cy="232" r="2.5" fill="#000000"/>
+    <circle cx="180" cy="238" r="2.5" fill="#000000"/>
+    <circle cx="230" cy="222" r="2" fill="#888780"/>
+    <circle cx="280" cy="202" r="2" fill="#888780"/>
+
+    <rect x="12" y="276" width="296" height="80" rx="4" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <rect x="12" y="276" width="296" height="20" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="22" y="290" font-size="10" font-weight="700" fill="#000000">Readings</text>
+    <text x="22"  y="312" font-size="8" fill="#5F5E5A">ID  TEMP  HUM  TIMESTAMP</text>
+    <text x="22"  y="326" font-size="9" fill="#000000">1   5.5   65   10:12:58</text>
+    <text x="22"  y="340" font-size="9" fill="#000000">6   0.17  61   07:22:48</text>
+    <text x="160" y="350" text-anchor="middle" font-size="8" fill="#5F5E5A">...newest first</text>
+
+    <rect x="12" y="364" width="296" height="80" rx="4" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <rect x="12" y="364" width="296" height="20" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="22" y="378" font-size="10" font-weight="700" fill="#000000">Alerts</text>
+    <text x="22" y="400" font-size="8" fill="#5F5E5A">ID  MESSAGE  SEVERITY  RESOLVED  ACTION</text>
+    <text x="22" y="416" font-size="9" fill="#000000">1   above thr.  critical   no</text>
+    <rect x="240" y="408" width="48" height="12" rx="2" fill="#ffffff" stroke="#888780" stroke-width="0.6"/>
+    <text x="264" y="417" text-anchor="middle" font-size="8" fill="#000000">Resolve</text>
+
+    <rect x="12" y="452" width="296" height="76" rx="4" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <rect x="12" y="452" width="296" height="20" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.8"/>
+    <text x="22" y="466" font-size="10" font-weight="700" fill="#000000">Simulate sensor reading</text>
+    <rect x="22" y="480" width="120" height="14" rx="2" fill="#ffffff" stroke="#888780" stroke-width="0.6"/>
+    <text x="82" y="491" text-anchor="middle" font-size="8" fill="#5F5E5A">temp</text>
+    <rect x="148" y="480" width="120" height="14" rx="2" fill="#ffffff" stroke="#888780" stroke-width="0.6"/>
+    <text x="208" y="491" text-anchor="middle" font-size="8" fill="#5F5E5A">humidity</text>
+    <rect x="22" y="502" width="80" height="16" rx="2" fill="#888780"/>
+    <text x="62" y="513" text-anchor="middle" font-size="8" fill="#ffffff">Send safe</text>
+    <rect x="108" y="502" width="80" height="16" rx="2" fill="#ffffff" stroke="#888780" stroke-width="0.8"/>
+    <text x="148" y="513" text-anchor="middle" font-size="8" fill="#000000">Send violation</text>
+    <rect x="194" y="502" width="80" height="16" rx="2" fill="#F1EFE8" stroke="#888780" stroke-width="0.6"/>
+    <text x="234" y="513" text-anchor="middle" font-size="8" fill="#000000">Send custom</text>
+  </g>
+
+  <!-- Page label outside the page box -->
+  <text x="880" y="624" text-anchor="middle" font-size="13" font-weight="700" fill="#000000">shipment.html</text>
+  <text x="880" y="640" text-anchor="middle" font-size="11" fill="#5F5E5A">Shipment detail</text>
+
+  <!-- Notation pushed to the very bottom, well below the page labels -->
+  <text x="540" y="668" text-anchor="middle" font-size="11" fill="#5F5E5A">
+    Each page shares a top nav. Layout zones (cards, tables) are bordered for clarity, no fancy theming.
+  </text>
+</svg>
