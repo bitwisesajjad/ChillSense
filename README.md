@@ -257,7 +257,7 @@ docker compose up --build  # docker compose -f docker-compose.prod.yml up --buil
 
 ---
 
-## Demo Guide (For Presentation)
+## Demo Guide
 
 ### i. API Routing & Error Handling
 
@@ -434,33 +434,131 @@ docker compose up --build
 
 ## Cloud Deployment (Production)
 
-The API is live at: http://34.88.97.198:5001/api/shipments
+The full stack is live at http://34.88.97.198:5001/
 
-### How to update the server after pushing changes to GitHub
+- Client UI: http://34.88.97.198:5001/
+- Main API: http://34.88.97.198:5001/api/shipments
+- Alert Dispatcher: http://34.88.97.198:5001/dispatcher/webhooks
+- Trigger one polling cycle (demo): http://34.88.97.198:5001/dispatcher/polling-now
+- Delivery history: http://34.88.97.198:5001/dispatcher/deliveries
 
-SSH into the VM, then:
+### How to redeploy after pushing backend changes to GitHub
+
+Whenever you push commits that touch the backend (api, alert-dispatcher, models, db_init, dependencies, compose files, nginx config), the VM does not pick them up automatically. SSH in and rebuild.
+
+#### 1. SSH into the VM
 
 ```bash
-cd ChillSense
+gcloud compute ssh chillsense-vm --zone=europe-north1-a
+```
+
+Or use the SSH button next to the VM in the Google Cloud console.
+
+#### 2. Check the current state before changing anything
+
+```bash
+cd ~/ChillSense
+git status
+git branch --show-current
+docker-compose -f docker-compose.prod.yml ps
+```
+
+`git status` should say working tree clean. If it shows local changes, decide whether to keep or discard them before pulling. `ps` should list five services (postgres-db, api, alert-dispatcher, frontend, nginx), all `Up (healthy)`.
+
+#### 3. See what new commits are coming in
+
+```bash
+git fetch
+git log HEAD..origin/main --oneline
+```
+
+If the second command prints nothing, the VM is already up to date and no redeploy is needed. If it lists commits, those are the changes about to be applied. Press `q` to exit the pager.
+
+#### 4. Stop the running stack
+
+```bash
+docker-compose -f docker-compose.prod.yml down --remove-orphans
+```
+
+`--remove-orphans` cleans up containers from older compose files that no longer exist. Postgres data is stored on disk at `./postgres/data` (not in a docker-managed volume), so this does NOT delete shipments, readings, or webhook history.
+
+#### 5. Pull the new code
+
+```bash
 git pull
+```
+
+#### 6. Confirm the host ports are free
+
+Before rebuilding, make sure nothing else grabbed the ports while the stack was down:
+
+```bash
+sudo lsof -iTCP -sTCP:LISTEN -P -n | grep -E ':5001|:5432'
+```
+
+If this prints anything, another process is using the port and the build will fail when nginx or postgres tries to bind. Kill whatever is holding it before continuing.
+
+#### 7. Build and start the new stack
+
+```bash
 docker-compose -f docker-compose.prod.yml up --build -d
 ```
 
-If you also changed static files or need a full clean restart:
+`--build` forces a fresh image build so the new code actually ends up in the containers. `-d` runs detached. First rebuild after big dependency changes can take a few minutes.
+
+#### 8. Verify all services came up healthy
 
 ```bash
-docker-compose -f docker-compose.prod.yml down
-git pull
+docker-compose -f docker-compose.prod.yml ps
+```
+
+All five services must show `Up (healthy)`. If any shows `unhealthy`, `restarting`, or `Exit`, check its logs:
+
+```bash
+docker-compose -f docker-compose.prod.yml logs --tail=50 <service-name>
+```
+
+Service names: `api`, `alert-dispatcher`, `frontend`, `nginx`, `postgres-db`.
+
+#### 9. test the endpoints
+
+From inside the VM:
+
+```bash
+curl -s -o /dev/null -w "client UI:  %{http_code}\n" http://localhost:5001/
+curl -s -o /dev/null -w "api:        %{http_code}\n" http://localhost:5001/api/shipments
+curl -s -o /dev/null -w "dispatcher: %{http_code}\n" http://localhost:5001/dispatcher/webhooks
+```
+
+All three should return `200`. If any returns something else, check that service's logs.
+
+From your laptop, also open these in a browser to confirm public reachability:
+
+- http://34.88.97.198:5001/
+- http://34.88.97.198:5001/api/shipments
+- http://34.88.97.198:5001/dispatcher/webhooks
+
+#### 10. (Optional) Trigger one polling cycle
+
+The dispatcher polls every 10 minutes by default. To verify it works without waiting:
+
+```bash
+curl http://localhost:5001/dispatcher/polling-now
+curl http://localhost:5001/dispatcher/deliveries
+```
+
+### Rollback if a redeploy goes wrong
+
+If a new build is broken and you need to get back to the last working state:
+
+```bash
+docker-compose -f docker-compose.prod.yml down --remove-orphans
+git log --oneline -5                      # find the last good commit hash
+git checkout <good-commit-hash>
 docker-compose -f docker-compose.prod.yml up --build -d
 ```
 
-### How to clear the cache
-
-The API uses Flask-Caching with FileSystemCache. If GET /api/shipments returns stale data, clear the cache:
-
-```bash
-docker-compose -f docker-compose.prod.yml exec api rm -rf /app/instance/cache/
-```
+When the fix is ready, switch back with `git checkout main && git pull`.
 
 ### How to stop everything
 
